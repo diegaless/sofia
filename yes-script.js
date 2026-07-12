@@ -47,7 +47,9 @@ function initWalkingDog() {
 
     const randomBetween = (min, max) => min + Math.random() * Math.max(0, max - min)
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
-    const usesMobileRoute = () => window.innerWidth <= 700
+    const usesMobileRoute = () => (
+        window.innerWidth <= 700 && window.innerHeight >= window.innerWidth
+    )
 
     const fitDogToSidePassage = () => {
         dog.style.width = ''
@@ -303,7 +305,7 @@ function initWalkingDog() {
             Math.max(18, photoRect.top / 3),
             Math.max(18, (window.innerHeight - photoRect.bottom) / 3)
         )
-        const cornerClearance = 13
+        const cornerClearance = 15
         const topY = Math.max(halfHeight + 2, photoRect.top - radius - halfHeight - cornerClearance)
         const bottomY = Math.min(
             window.innerHeight - halfHeight - 2,
