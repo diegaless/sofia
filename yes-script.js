@@ -367,7 +367,6 @@ function initWalkingDog() {
         const facingTransform = transformFor(point, facingAngle)
 
         if (Math.abs(angleDelta) > 1) {
-            setDogVisual('idle')
             const turned = await runAnimation(
                 [{ transform: transformFor(point, state.currentAngle) }, { transform: facingTransform }],
                 { duration: clamp(Math.abs(angleDelta) * 5, 180, 780), easing: 'ease-in-out' }
@@ -377,10 +376,15 @@ function initWalkingDog() {
 
         setDogVisual('lick')
         const forwardDistance = clamp(state.dogWidth * 0.03, 2, 5)
+        const tongue = document.createElement('span')
         const forwardPoint = {
             x: point.x + Math.cos(radians) * forwardDistance,
             y: point.y + Math.sin(radians) * forwardDistance
         }
+
+        tongue.className = 'dog-tongue-extension'
+        tongue.style.width = `${clamp(state.dogWidth * 0.18, 8, 16)}px`
+        dog.appendChild(tongue)
 
         const licked = await runAnimation(
             [
@@ -394,6 +398,7 @@ function initWalkingDog() {
             ],
             { duration: 1500, easing: 'ease-in-out' }
         )
+        tongue.remove()
         if (!licked) {
             setDogVisual('walk')
             return false

@@ -294,19 +294,14 @@ h1 {
     height: 100%;
     object-fit: contain;
     opacity: 0;
-    transition: opacity 150ms ease-in-out;
+    visibility: hidden;
     backface-visibility: hidden;
     will-change: opacity;
 }
 
 .walking-dog-layer.is-active {
     opacity: 1;
-}
-
-@media (max-width: 700px) {
-    .walking-dog-layer {
-        transition: none;
-    }
+    visibility: visible;
 }
 
 .dog-footprint {
@@ -362,6 +357,31 @@ h1 {
     100% {
         opacity: 0;
         transform: translate(-50%, -50%) rotate(var(--footprint-angle)) scale(0.88);
+    }
+}
+
+.dog-tongue-extension {
+    position: absolute;
+    left: 96%;
+    top: 65%;
+    height: clamp(3px, 0.9vw, 5px);
+    border-radius: 999px 75% 75% 999px;
+    background: linear-gradient(90deg, #f0789f, #ff9fbd);
+    box-shadow: 0 1px 2px rgba(177, 31, 93, 0.2);
+    transform-origin: 0 50%;
+    animation: tongueExtensionLick 0.5s ease-in-out 3;
+    pointer-events: none;
+    z-index: 3;
+}
+
+@keyframes tongueExtensionLick {
+    0%, 100% {
+        opacity: 0.72;
+        transform: translateY(-50%) scaleX(0.38);
+    }
+    42%, 68% {
+        opacity: 1;
+        transform: translateY(-50%) scaleX(1);
     }
 }
 
