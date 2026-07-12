@@ -42,7 +42,10 @@ function initWalkingDog() {
         currentAngle: 0,
         layoutVersion: 0,
         dogWidth: 160,
-        dogHeight: 72
+        dogHeight: 72,
+        footprintDistance: 0,
+        footprintSide: -1,
+        activeFootprints: []
     }
 
     const randomBetween = (min, max) => min + Math.random() * Math.max(0, max - min)
@@ -245,6 +248,57 @@ function initWalkingDog() {
         return `translate3d(${x}px, ${y}px, 0) rotate(${angle}deg)`
     }
 
+    const removeFootprint = (footprint) => {
+        footprint.remove()
+        state.activeFootprints = state.activeFootprints.filter((item) => item !== footprint)
+    }
+
+    const leaveFootprint = (point, angle, side) => {
+        const radians = angle * Math.PI / 180
+        const sideOffset = clamp(state.dogHeight * 0.22, 3, 7)
+        const backOffset = clamp(state.dogWidth * 0.16, 7, 20)
+        const footprint = document.createElement('span')
+        const x = point.x - Math.cos(radians) * backOffset - Math.sin(radians) * sideOffset * side
+        const y = point.y - Math.sin(radians) * backOffset + Math.cos(radians) * sideOffset * side
+
+        footprint.className = 'dog-footprint'
+        footprint.style.left = `${x}px`
+        footprint.style.top = `${y}px`
+        footprint.style.setProperty('--footprint-angle', `${angle + 90}deg`)
+        footprint.addEventListener('animationend', () => removeFootprint(footprint), { once: true })
+        track.insertBefore(footprint, dog)
+        state.activeFootprints.push(footprint)
+
+        while (state.activeFootprints.length > 25) {
+            removeFootprint(state.activeFootprints[0])
+        }
+    }
+
+    const scheduleFootprints = (start, target, angle, duration) => {
+        const distance = Math.hypot(target.x - start.x, target.y - start.y)
+        const spacing = usesMobileRoute() ? 24 : 31
+        const timers = []
+        let nextDistance = spacing - state.footprintDistance
+
+        while (nextDistance <= distance) {
+            const progress = nextDistance / distance
+            const side = state.footprintSide
+            const point = {
+                x: start.x + (target.x - start.x) * progress,
+                y: start.y + (target.y - start.y) * progress
+            }
+            const timer = setTimeout(() => leaveFootprint(point, angle, side), duration * progress)
+            timers.push(timer)
+            state.footprintSide *= -1
+            nextDistance += spacing
+        }
+
+        state.footprintDistance = (state.footprintDistance + distance) % spacing
+        return timers
+    }
+
+    const cancelFootprintTimers = (timers) => timers.forEach((timer) => clearTimeout(timer))
+
     const runAnimation = async (keyframes, options) => {
         state.activeAnimation = dog.animate(keyframes, { ...options, fill: 'forwards' })
         try {
@@ -340,14 +394,19 @@ function initWalkingDog() {
         const angleDelta = ((heading - state.currentAngle + 540) % 360) - 180
         const nextAngle = state.currentAngle + angleDelta
         const distance = Math.hypot(target.x - start.x, target.y - start.y)
+        const duration = Math.max(90, distance / 68 * 1000)
+        const footprintTimers = scheduleFootprints(start, target, nextAngle, duration)
         const completed = await runAnimation(
             [
                 { transform: transformFor(start, state.currentAngle) },
                 { transform: transformFor(target, nextAngle) }
             ],
-            { duration: Math.max(90, distance / 68 * 1000), easing: 'linear' }
+            { duration, easing: 'linear' }
         )
-        if (!completed) return false
+        if (!completed) {
+            cancelFootprintTimers(footprintTimers)
+            return false
+        }
 
         dog.style.transform = transformFor(target, nextAngle)
         state.currentPoint = target
@@ -396,11 +455,16 @@ function initWalkingDog() {
         }
 
         const distance = Math.hypot(target.x - start.x, target.y - start.y)
+        const duration = Math.max(450, distance / 78 * 1000)
+        const footprintTimers = scheduleFootprints(start, target, nextAngle, duration)
         const completed = await runAnimation(
             [{ transform: turnedTransform }, { transform: targetTransform }],
-            { duration: Math.max(450, distance / 78 * 1000), easing: 'linear' }
+            { duration, easing: 'linear' }
         )
-        if (!completed) return false
+        if (!completed) {
+            cancelFootprintTimers(footprintTimers)
+            return false
+        }
 
         dog.style.transform = targetTransform
         state.currentPoint = target
