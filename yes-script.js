@@ -47,14 +47,25 @@ function initWalkingDog() {
 
     const randomBetween = (min, max) => min + Math.random() * Math.max(0, max - min)
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
+    const usesMobileRoute = () => window.innerWidth <= 700
 
     const fitDogToSidePassage = () => {
         dog.style.width = ''
         const baseWidth = parseFloat(getComputedStyle(dog).width) || 160
         const photoRect = photo.getBoundingClientRect()
+        const aspectRatio = (dog.naturalWidth || 580) / (dog.naturalHeight || 260)
+
+        if (usesMobileRoute()) {
+            const sidePassage = Math.max(photoRect.left, window.innerWidth - photoRect.right)
+            const orientedPassageWidth = Math.max(38, (sidePassage - 3) * aspectRatio)
+            state.dogWidth = Math.min(baseWidth, orientedPassageWidth)
+            state.dogHeight = state.dogWidth / aspectRatio
+            dog.style.width = `${state.dogWidth}px`
+            return
+        }
+
         const horizontalPassage = Math.max(photoRect.left, window.innerWidth - photoRect.right)
         const verticalPassage = Math.max(photoRect.top, window.innerHeight - photoRect.bottom)
-        const aspectRatio = (dog.naturalWidth || 580) / (dog.naturalHeight || 260)
         const diagonalFactor = Math.sqrt(1 + 1 / (aspectRatio ** 2)) / 2
         const limitingPassage = Math.min(horizontalPassage, verticalPassage)
         const maximumRadius = Math.max(30, (limitingPassage - 18) / 2)
@@ -246,6 +257,125 @@ function initWalkingDog() {
 
     const wait = (duration) => new Promise((resolve) => setTimeout(resolve, duration))
 
+    const addLinePoints = (points, start, end, spacing = 12) => {
+        const distance = Math.hypot(end.x - start.x, end.y - start.y)
+        const steps = Math.max(1, Math.ceil(distance / spacing))
+        for (let step = 1; step <= steps; step += 1) {
+            const progress = step / steps
+            points.push({
+                x: start.x + (end.x - start.x) * progress,
+                y: start.y + (end.y - start.y) * progress
+            })
+        }
+    }
+
+    const addCurvePoints = (points, start, control, end, spacing = 7) => {
+        const approximateLength = Math.hypot(control.x - start.x, control.y - start.y) +
+            Math.hypot(end.x - control.x, end.y - control.y)
+        const steps = Math.max(4, Math.ceil(approximateLength / spacing))
+        for (let step = 1; step <= steps; step += 1) {
+            const progress = step / steps
+            const inverse = 1 - progress
+            points.push({
+                x: inverse ** 2 * start.x + 2 * inverse * progress * control.x + progress ** 2 * end.x,
+                y: inverse ** 2 * start.y + 2 * inverse * progress * control.y + progress ** 2 * end.y
+            })
+        }
+    }
+
+    const buildMobileLoop = () => {
+        const photoRect = photo.getBoundingClientRect()
+        const halfHeight = state.dogHeight / 2
+        const leftX = clamp(
+            photoRect.left / 2,
+            halfHeight + 1,
+            Math.max(halfHeight + 1, photoRect.left - halfHeight - 1)
+        )
+        const rightX = clamp(
+            photoRect.right + (window.innerWidth - photoRect.right) / 2,
+            Math.min(window.innerWidth - halfHeight - 1, photoRect.right + halfHeight + 1),
+            window.innerWidth - halfHeight - 1
+        )
+        const radius = Math.min(
+            34,
+            state.dogWidth * 0.72,
+            (rightX - leftX) / 4,
+            Math.max(18, photoRect.top / 3),
+            Math.max(18, (window.innerHeight - photoRect.bottom) / 3)
+        )
+        const cornerClearance = 13
+        const topY = Math.max(halfHeight + 2, photoRect.top - radius - halfHeight - cornerClearance)
+        const bottomY = Math.min(
+            window.innerHeight - halfHeight - 2,
+            photoRect.bottom + radius + halfHeight + cornerClearance
+        )
+        const points = []
+        const topLeft = { x: leftX + radius, y: topY }
+        const topRight = { x: rightX - radius, y: topY }
+        const rightTop = { x: rightX, y: topY + radius }
+        const rightBottom = { x: rightX, y: bottomY - radius }
+        const bottomRight = { x: rightX - radius, y: bottomY }
+        const bottomLeft = { x: leftX + radius, y: bottomY }
+        const leftBottom = { x: leftX, y: bottomY - radius }
+        const leftTop = { x: leftX, y: topY + radius }
+
+        points.push(topLeft)
+        addLinePoints(points, topLeft, topRight)
+        addCurvePoints(points, topRight, { x: rightX, y: topY }, rightTop)
+        addLinePoints(points, rightTop, rightBottom)
+        addCurvePoints(points, rightBottom, { x: rightX, y: bottomY }, bottomRight)
+        addLinePoints(points, bottomRight, bottomLeft)
+        addCurvePoints(points, bottomLeft, { x: leftX, y: bottomY }, leftBottom)
+        addLinePoints(points, leftBottom, leftTop)
+        addCurvePoints(points, leftTop, { x: leftX, y: topY }, topLeft)
+        points.pop()
+        return points
+    }
+
+    const walkMobileStep = async (target) => {
+        const start = state.currentPoint
+        const heading = Math.atan2(target.y - start.y, target.x - start.x) * 180 / Math.PI
+        const angleDelta = ((heading - state.currentAngle + 540) % 360) - 180
+        const nextAngle = state.currentAngle + angleDelta
+        const distance = Math.hypot(target.x - start.x, target.y - start.y)
+        const completed = await runAnimation(
+            [
+                { transform: transformFor(start, state.currentAngle) },
+                { transform: transformFor(target, nextAngle) }
+            ],
+            { duration: Math.max(90, distance / 68 * 1000), easing: 'linear' }
+        )
+        if (!completed) return false
+
+        dog.style.transform = transformFor(target, nextAngle)
+        state.currentPoint = target
+        state.currentAngle = nextAngle
+        return true
+    }
+
+    const roamMobile = async () => {
+        while (dog.isConnected && usesMobileRoute()) {
+            fitDogToSidePassage()
+            const points = buildMobileLoop()
+            const version = state.layoutVersion
+            const direction = Math.random() < 0.5 ? 1 : -1
+            let index = Math.floor(Math.random() * points.length)
+            const nextIndex = (index + direction + points.length) % points.length
+            state.currentPoint = points[index]
+            state.currentAngle = Math.atan2(
+                points[nextIndex].y - points[index].y,
+                points[nextIndex].x - points[index].x
+            ) * 180 / Math.PI
+            dog.style.transform = transformFor(state.currentPoint, state.currentAngle)
+            dog.style.opacity = '1'
+
+            while (dog.isConnected && version === state.layoutVersion && usesMobileRoute()) {
+                index = (index + direction + points.length) % points.length
+                if (!await walkMobileStep(points[index])) break
+            }
+        }
+    }
+
     const walkSegment = async (target) => {
         const start = state.currentPoint
         const heading = Math.atan2(target.y - start.y, target.x - start.x) * 180 / Math.PI
@@ -278,6 +408,12 @@ function initWalkingDog() {
 
     const roam = async () => {
         fitDogToSidePassage()
+
+        if (usesMobileRoute()) {
+            await roamMobile()
+            return
+        }
+
         let metrics = getMetrics()
         state.currentPoint = randomFreePoint(metrics)
         state.currentAngle = Math.random() * 360
