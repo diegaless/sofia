@@ -679,7 +679,13 @@ function initWalkingDog() {
         return true
     }
 
-    const walkEasterEggStep = async (target, speed = 90, drawsHeart = false, leavesFootprints = true) => {
+    const walkEasterEggStep = async (
+        target,
+        speed = 90,
+        drawsHeart = false,
+        leavesFootprints = true,
+        easing = 'linear'
+    ) => {
         setDogVisual('walk')
         const start = state.currentPoint
         const distance = Math.hypot(target.x - start.x, target.y - start.y)
@@ -700,7 +706,7 @@ function initWalkingDog() {
                 { transform: transformFor(start, state.currentAngle) },
                 { transform: transformFor(target, nextAngle) }
             ],
-            { duration, easing: 'linear' }
+            { duration, easing }
         )
         if (!completed) {
             cancelFootprintTimers(footprintTimers)
@@ -951,7 +957,7 @@ function initWalkingDog() {
         }
 
         const signatureWidth = signature.offsetWidth
-        const dogWritingY = signatureY + clamp(state.dogHeight * 0.95, 17, 28)
+        const dogWritingY = signatureY + signature.offsetHeight / 2 + state.dogWidth / 2 + 7
         const startPoint = {
             x: clamp(
                 centerX - signatureWidth / 2 - state.dogWidth * 0.18,
@@ -969,7 +975,18 @@ function initWalkingDog() {
             y: dogWritingY
         }
 
-        await walkEasterEggStep(startPoint, 165, false, false)
+        const approachPoint = {
+            x: clamp(
+                startPoint.x - state.dogWidth * 0.72,
+                state.dogWidth / 2 + 4,
+                window.innerWidth - state.dogWidth / 2 - 4
+            ),
+            y: dogWritingY
+        }
+        await walkEasterEggStep(approachPoint, 165, false, false, 'ease-in-out')
+        await walkEasterEggStep(startPoint, 105, false, false, 'ease-in-out')
+        setDogVisual('idle')
+        await wait(320)
         const writingDistance = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y)
         const duration = clamp(writingDistance / 70 * 1000, 1900, 3000)
         const writingSpeed = writingDistance / (duration / 1000)
@@ -979,9 +996,23 @@ function initWalkingDog() {
             resolve()
         }))
         await Promise.all([
-            walkEasterEggStep(endPoint, writingSpeed, false, false),
+            walkEasterEggStep(
+                endPoint,
+                writingSpeed,
+                false,
+                false,
+                'cubic-bezier(0.45, 0.05, 0.55, 0.95)'
+            ),
             wait(duration)
         ])
+        await wait(180)
+        const restingPoint = {
+            x: bounds.maxX - state.dogWidth * 0.72,
+            y: bounds.minY + heartHeight * 0.3
+        }
+        await walkEasterEggStep(restingPoint, 145, false, false, 'ease-in-out')
+        setDogVisual('idle')
+        await wait(220)
         return signature
     }
 

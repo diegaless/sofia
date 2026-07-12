@@ -479,7 +479,7 @@ h1 {
 
 .easter-egg-signature.is-writing {
     opacity: 1;
-    animation: signatureWrite var(--signature-duration) linear forwards;
+    animation: signatureWrite var(--signature-duration) cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
 }
 
 .easter-egg-signature.is-fading {
