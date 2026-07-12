@@ -53,7 +53,9 @@ function initWalkingDog() {
         easterEggTapCount: 0,
         easterEggTapTimer: null,
         pausedTapAnimation: null,
-        resumeMobileRoute: false
+        resumeMobileRoute: false,
+        dogHintShown: false,
+        dogHintTimer: null
     }
     const dogMouthForwardRatio = 274 / 580
     const dogVisualsReady = Promise.all(dogLayers.map((image) => (
@@ -429,6 +431,59 @@ function initWalkingDog() {
         setDogVisual('idle')
         await wait(duration)
         return dog.isConnected
+    }
+
+    const scheduleDogHint = (delay = 6500) => {
+        if (state.dogHintShown) return
+        clearTimeout(state.dogHintTimer)
+        state.dogHintTimer = setTimeout(async () => {
+            state.dogHintTimer = null
+            if (
+                document.hidden ||
+                state.easterEggActive ||
+                state.easterEggTapCount > 0 ||
+                !state.currentPoint
+            ) {
+                scheduleDogHint(2200)
+                return
+            }
+
+            state.dogHintShown = true
+            const pausedAnimation = state.activeAnimation
+            pausedAnimation?.pause()
+
+            const dogRect = dog.getBoundingClientRect()
+            const hint = document.createElement('div')
+            hint.className = 'dog-hint'
+            hint.setAttribute('role', 'status')
+            hint.textContent = 'Psst… acaríciame un poquito 🐾💗'
+            document.body.appendChild(hint)
+
+            const halfHintWidth = hint.offsetWidth / 2
+            const showBelow = dogRect.top < hint.offsetHeight + 18
+            hint.classList.toggle('is-below', showBelow)
+            hint.style.left = `${clamp(
+                dogRect.left + dogRect.width / 2,
+                halfHintWidth + 10,
+                window.innerWidth - halfHintWidth - 10
+            )}px`
+            hint.style.top = `${showBelow ? dogRect.bottom + 12 : dogRect.top - 12}px`
+            requestAnimationFrame(() => hint.classList.add('is-visible'))
+
+            await wait(3600)
+            hint.classList.remove('is-visible')
+            await wait(260)
+            hint.remove()
+
+            if (
+                pausedAnimation &&
+                pausedAnimation === state.activeAnimation &&
+                pausedAnimation.playState === 'paused' &&
+                state.easterEggTapCount === 0
+            ) {
+                pausedAnimation.play()
+            }
+        }, delay)
     }
 
     const captureCurrentPose = () => {
@@ -1024,7 +1079,8 @@ function initWalkingDog() {
 
     const startRoaming = async () => {
         await Promise.race([dogVisualsReady, wait(900)])
-        roam()
+        void roam()
+        scheduleDogHint()
     }
 
     if (!primaryDogImage.complete) {
