@@ -343,6 +343,30 @@ h1 {
     }
 }
 
+.dog-tongue {
+    --tongue-angle: 0deg;
+    position: absolute;
+    height: clamp(4px, 1.2vw, 7px);
+    border-radius: 999px 70% 70% 999px;
+    background: linear-gradient(90deg, #ff5c9a, #ff8fba);
+    box-shadow: 0 1px 3px rgba(177, 31, 93, 0.28);
+    transform-origin: 0 50%;
+    animation: tongueLick 0.5s ease-in-out 3;
+    pointer-events: none;
+    z-index: 3;
+}
+
+@keyframes tongueLick {
+    0%, 100% {
+        opacity: 0;
+        transform: translateY(-50%) rotate(var(--tongue-angle)) scaleX(0.12);
+    }
+    32%, 68% {
+        opacity: 1;
+        transform: translateY(-50%) rotate(var(--tongue-angle)) scaleX(1);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .hearts-bg::before,
     .hearts-bg::after,

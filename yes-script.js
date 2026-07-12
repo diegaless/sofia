@@ -45,14 +45,20 @@ function initWalkingDog() {
         dogHeight: 72,
         footprintDistance: 0,
         footprintSide: -1,
-        activeFootprints: []
+        activeFootprints: [],
+        nextLickAt: 0
     }
 
     const randomBetween = (min, max) => min + Math.random() * Math.max(0, max - min)
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
+    const scheduleNextLick = (first = false) => {
+        state.nextLickAt = performance.now() + randomBetween(first ? 8000 : 18000, first ? 14000 : 30000)
+    }
     const usesMobileRoute = () => (
         window.innerWidth <= 700 && window.innerHeight >= window.innerWidth
     )
+
+    scheduleNextLick(true)
 
     const fitDogToSidePassage = () => {
         dog.style.width = ''
@@ -311,6 +317,81 @@ function initWalkingDog() {
         }
     }
 
+    const walkBackward = async (target) => {
+        const start = state.currentPoint
+        const angle = state.currentAngle
+        const distance = Math.hypot(target.x - start.x, target.y - start.y)
+        const duration = Math.max(380, distance / 55 * 1000)
+        const footprintTimers = scheduleFootprints(start, target, angle, duration)
+        const completed = await runAnimation(
+            [
+                { transform: transformFor(start, angle) },
+                { transform: transformFor(target, angle) }
+            ],
+            { duration, easing: 'ease-in-out' }
+        )
+        if (!completed) {
+            cancelFootprintTimers(footprintTimers)
+            return false
+        }
+
+        dog.style.transform = transformFor(target, angle)
+        state.currentPoint = target
+        return true
+    }
+
+    const lickPhoto = async (point, angle) => {
+        const radians = angle * Math.PI / 180
+        const angleDelta = ((angle - state.currentAngle + 540) % 360) - 180
+        const facingAngle = state.currentAngle + angleDelta
+        const facingTransform = transformFor(point, facingAngle)
+
+        if (Math.abs(angleDelta) > 1) {
+            const turned = await runAnimation(
+                [{ transform: transformFor(point, state.currentAngle) }, { transform: facingTransform }],
+                { duration: clamp(Math.abs(angleDelta) * 5, 180, 780), easing: 'ease-in-out' }
+            )
+            if (!turned) return false
+        }
+
+        const tongue = document.createElement('span')
+        const tongueWidth = clamp(state.dogWidth * 0.1, 7, 15)
+        const headDistance = state.dogWidth * 0.47
+        const forwardDistance = clamp(state.dogWidth * 0.03, 2, 5)
+        const forwardPoint = {
+            x: point.x + Math.cos(radians) * forwardDistance,
+            y: point.y + Math.sin(radians) * forwardDistance
+        }
+
+        tongue.className = 'dog-tongue'
+        tongue.style.left = `${point.x + Math.cos(radians) * (headDistance + forwardDistance)}px`
+        tongue.style.top = `${point.y + Math.sin(radians) * (headDistance + forwardDistance)}px`
+        tongue.style.width = `${tongueWidth}px`
+        tongue.style.setProperty('--tongue-angle', `${facingAngle}deg`)
+        track.appendChild(tongue)
+
+        const licked = await runAnimation(
+            [
+                { transform: facingTransform, offset: 0 },
+                { transform: transformFor(forwardPoint, facingAngle), offset: 0.16 },
+                { transform: facingTransform, offset: 0.32 },
+                { transform: transformFor(forwardPoint, facingAngle), offset: 0.5 },
+                { transform: facingTransform, offset: 0.66 },
+                { transform: transformFor(forwardPoint, facingAngle), offset: 0.84 },
+                { transform: facingTransform, offset: 1 }
+            ],
+            { duration: 1500, easing: 'ease-in-out' }
+        )
+        tongue.remove()
+        if (!licked) return false
+
+        dog.style.transform = facingTransform
+        state.currentPoint = point
+        state.currentAngle = facingAngle
+        scheduleNextLick()
+        return true
+    }
+
     const wait = (duration) => new Promise((resolve) => setTimeout(resolve, duration))
 
     const addLinePoints = (points, start, end, spacing = 12) => {
@@ -414,6 +495,32 @@ function initWalkingDog() {
         return true
     }
 
+    const getMobileLickSpot = (routePoint) => {
+        if (performance.now() < state.nextLickAt) return null
+
+        const photoRect = photo.getBoundingClientRect()
+        const edgeInset = state.dogHeight + 4
+        if (routePoint.x < photoRect.left + edgeInset || routePoint.x > photoRect.right - edgeInset) {
+            return null
+        }
+
+        if (routePoint.y < photoRect.top) {
+            const safetyDistance = clamp(state.dogWidth * 0.03, 2, 5) + 2
+            return {
+                point: { x: routePoint.x, y: photoRect.top - state.dogWidth / 2 - safetyDistance },
+                angle: 90
+            }
+        }
+        if (routePoint.y > photoRect.bottom) {
+            const safetyDistance = clamp(state.dogWidth * 0.03, 2, 5) + 2
+            return {
+                point: { x: routePoint.x, y: photoRect.bottom + state.dogWidth / 2 + safetyDistance },
+                angle: -90
+            }
+        }
+        return null
+    }
+
     const roamMobile = async () => {
         while (dog.isConnected && usesMobileRoute()) {
             fitDogToSidePassage()
@@ -432,7 +539,15 @@ function initWalkingDog() {
 
             while (dog.isConnected && version === state.layoutVersion && usesMobileRoute()) {
                 index = (index + direction + points.length) % points.length
-                if (!await walkMobileStep(points[index])) break
+                const routePoint = points[index]
+                if (!await walkMobileStep(routePoint)) break
+
+                const lickSpot = getMobileLickSpot(routePoint)
+                if (lickSpot) {
+                    if (!await walkMobileStep(lickSpot.point)) break
+                    if (!await lickPhoto(lickSpot.point, lickSpot.angle)) break
+                    if (!await walkBackward(routePoint)) break
+                }
             }
         }
     }
@@ -472,6 +587,70 @@ function initWalkingDog() {
         return true
     }
 
+    const pointFitsFacing = (point, angle) => {
+        const vertical = Math.abs(Math.sin(angle * Math.PI / 180)) > 0.5
+        const halfWidth = (vertical ? state.dogHeight : state.dogWidth) / 2
+        const halfHeight = (vertical ? state.dogWidth : state.dogHeight) / 2
+        return (
+            point.x - halfWidth >= 1 && point.x + halfWidth <= window.innerWidth - 1 &&
+            point.y - halfHeight >= 1 && point.y + halfHeight <= window.innerHeight - 1
+        )
+    }
+
+    const visitPhotoForLick = async (metrics, version) => {
+        const photoRect = photo.getBoundingClientRect()
+        const centerX = photoRect.left + photoRect.width / 2
+        const centerY = photoRect.top + photoRect.height / 2
+        const safetyDistance = clamp(state.dogWidth * 0.03, 2, 5) + 2
+        const approachDistance = state.dogWidth / 2 + safetyDistance
+        const candidates = [
+            {
+                safe: { x: metrics.obstacle.left - 3, y: centerY },
+                lick: { x: photoRect.left - approachDistance, y: centerY },
+                angle: 0
+            },
+            {
+                safe: { x: metrics.obstacle.right + 3, y: centerY },
+                lick: { x: photoRect.right + approachDistance, y: centerY },
+                angle: 180
+            },
+            {
+                safe: { x: centerX, y: metrics.obstacle.top - 3 },
+                lick: { x: centerX, y: photoRect.top - approachDistance },
+                angle: 90
+            },
+            {
+                safe: { x: centerX, y: metrics.obstacle.bottom + 3 },
+                lick: { x: centerX, y: photoRect.bottom + approachDistance },
+                angle: -90
+            }
+        ].filter((candidate) => (
+            pointInsideBounds(candidate.safe, metrics.bounds) &&
+            pointFitsFacing(candidate.lick, candidate.angle)
+        )).sort(() => Math.random() - 0.5)
+
+        for (const candidate of candidates) {
+            const route = planRoute(state.currentPoint, candidate.safe, metrics)
+            if (!route) continue
+
+            let reachedPhoto = true
+            for (const point of route.slice(1)) {
+                if (version !== state.layoutVersion || !await walkSegment(point)) {
+                    reachedPhoto = false
+                    break
+                }
+            }
+            if (!reachedPhoto || version !== state.layoutVersion) return false
+            if (!await walkSegment(candidate.lick)) return false
+            if (!await lickPhoto(candidate.lick, candidate.angle)) return false
+            if (!await walkBackward(candidate.safe)) return false
+            return true
+        }
+
+        scheduleNextLick()
+        return false
+    }
+
     const roam = async () => {
         fitDogToSidePassage()
 
@@ -506,6 +685,9 @@ function initWalkingDog() {
 
             for (const point of route.slice(1)) {
                 if (version !== state.layoutVersion || !await walkSegment(point)) break
+            }
+            if (version === state.layoutVersion && performance.now() >= state.nextLickAt) {
+                await visitPhotoForLick(metrics, version)
             }
             await wait(120 + Math.random() * 300)
         }
