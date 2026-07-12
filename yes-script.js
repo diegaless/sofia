@@ -30,9 +30,11 @@ function initPage() {
 function initWalkingDog() {
     const track = document.querySelector('.walking-dog-track')
     const dog = document.querySelector('.walking-dog')
+    const dogLayers = [...document.querySelectorAll('.walking-dog-layer')]
+    const primaryDogImage = dogLayers[0]
     const photo = document.querySelector('.ojitos-photo')
 
-    if (!track || !dog || !photo || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (!track || !dog || dogLayers.length < 2 || !photo || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         return
     }
 
@@ -46,7 +48,8 @@ function initWalkingDog() {
         footprintDistance: 0,
         footprintSide: -1,
         activeFootprints: [],
-        nextLickAt: 0
+        nextLickAt: 0,
+        activeVisualLayer: 0
     }
     const dogVisuals = {
         walk: 'assets/walking-dachshund-top-animated.webp?v=3',
@@ -58,6 +61,11 @@ function initWalkingDog() {
         image.src = src
         return image
     })
+    const dogVisualsReady = Promise.all(preloadedDogVisuals.map((image) => (
+        typeof image.decode === 'function'
+            ? image.decode().catch(() => undefined)
+            : Promise.resolve()
+    )))
 
     const randomBetween = (min, max) => min + Math.random() * Math.max(0, max - min)
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
@@ -69,19 +77,25 @@ function initWalkingDog() {
     )
     const setDogVisual = (visual) => {
         if (dog.dataset.visual === visual) return
-        dog.src = dogVisuals[visual]
+
+        const currentLayer = dogLayers[state.activeVisualLayer]
+        const nextLayerIndex = (state.activeVisualLayer + 1) % dogLayers.length
+        const nextLayer = dogLayers[nextLayerIndex]
+
+        nextLayer.src = dogVisuals[visual]
+        nextLayer.classList.add('is-active')
+        currentLayer.classList.remove('is-active')
+        state.activeVisualLayer = nextLayerIndex
         dog.dataset.visual = visual
     }
 
-    void preloadedDogVisuals
-    dog.dataset.visual = 'walk'
     scheduleNextLick(true)
 
     const fitDogToSidePassage = () => {
         dog.style.width = ''
         const baseWidth = parseFloat(getComputedStyle(dog).width) || 160
         const photoRect = photo.getBoundingClientRect()
-        const aspectRatio = (dog.naturalWidth || 580) / (dog.naturalHeight || 260)
+        const aspectRatio = (primaryDogImage.naturalWidth || 580) / (primaryDogImage.naturalHeight || 260)
 
         if (usesMobileRoute()) {
             const sidePassage = Math.max(photoRect.left, window.innerWidth - photoRect.right)
@@ -590,24 +604,34 @@ function initWalkingDog() {
         const angleDelta = ((heading - state.currentAngle + 540) % 360) - 180
         const nextAngle = state.currentAngle + angleDelta
         const startTransform = transformFor(start, state.currentAngle)
-        const turnedTransform = transformFor(start, nextAngle)
         const targetTransform = transformFor(target, nextAngle)
-
-        if (Math.abs(angleDelta) > 1) {
-            setDogVisual('idle')
-            const turned = await runAnimation(
-                [{ transform: startTransform }, { transform: turnedTransform }],
-                { duration: clamp(Math.abs(angleDelta) * 5, 180, 850), easing: 'ease-in-out' }
-            )
-            if (!turned) return false
-        }
-
         setDogVisual('walk')
         const distance = Math.hypot(target.x - start.x, target.y - start.y)
-        const duration = Math.max(450, distance / speed * 1000)
+        const baseDuration = Math.max(450, distance / speed * 1000)
+        const turnDuration = Math.abs(angleDelta) > 1
+            ? clamp(Math.abs(angleDelta) * 4.2, 180, 720)
+            : 0
+        const duration = Math.max(baseDuration, turnDuration / 0.45)
+        const turnProgress = turnDuration > 0
+            ? clamp(turnDuration / duration, 0.04, 0.45)
+            : 0
+        const turnPoint = {
+            x: start.x + (target.x - start.x) * turnProgress,
+            y: start.y + (target.y - start.y) * turnProgress
+        }
+        const keyframes = turnDuration > 0
+            ? [
+                { transform: startTransform, offset: 0, easing: 'ease-in-out' },
+                { transform: transformFor(turnPoint, nextAngle), offset: turnProgress, easing: 'linear' },
+                { transform: targetTransform, offset: 1 }
+            ]
+            : [
+                { transform: startTransform },
+                { transform: targetTransform }
+            ]
         const footprintTimers = scheduleFootprints(start, target, nextAngle, duration)
         const completed = await runAnimation(
-            [{ transform: turnedTransform }, { transform: targetTransform }],
+            keyframes,
             { duration, easing: 'linear' }
         )
         if (!completed) {
@@ -738,10 +762,15 @@ function initWalkingDog() {
 
     window.addEventListener('resize', resetLayout, { passive: true })
 
-    if (!dog.complete) {
-        dog.addEventListener('load', roam, { once: true })
-    } else {
+    const startRoaming = async () => {
+        await Promise.race([dogVisualsReady, wait(900)])
         roam()
+    }
+
+    if (!primaryDogImage.complete) {
+        primaryDogImage.addEventListener('load', startRoaming, { once: true })
+    } else {
+        startRoaming()
     }
 }
 
