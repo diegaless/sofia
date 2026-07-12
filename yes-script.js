@@ -48,7 +48,12 @@ function initWalkingDog() {
         footprintDistance: 0,
         footprintSide: -1,
         activeFootprints: [],
-        nextLickAt: 0
+        nextLickAt: 0,
+        easterEggActive: false,
+        easterEggTapCount: 0,
+        easterEggTapTimer: null,
+        pausedTapAnimation: null,
+        resumeMobileRoute: false
     }
     const dogMouthForwardRatio = 274 / 580
     const dogVisualsReady = Promise.all(dogLayers.map((image) => (
@@ -278,7 +283,7 @@ function initWalkingDog() {
         state.activeFootprints = state.activeFootprints.filter((item) => item !== footprint)
     }
 
-    const leaveFootprint = (point, angle, side) => {
+    const leaveFootprint = (point, angle, side, easterEgg = false) => {
         const radians = angle * Math.PI / 180
         const sideOffset = clamp(state.dogHeight * 0.22, 3, 7)
         const backOffset = clamp(state.dogWidth * 0.16, 7, 20)
@@ -286,7 +291,7 @@ function initWalkingDog() {
         const x = point.x - Math.cos(radians) * backOffset - Math.sin(radians) * sideOffset * side
         const y = point.y - Math.sin(radians) * backOffset + Math.cos(radians) * sideOffset * side
 
-        footprint.className = 'dog-footprint'
+        footprint.className = easterEgg ? 'dog-footprint easter-egg-footprint' : 'dog-footprint'
         footprint.style.left = `${x}px`
         footprint.style.top = `${y}px`
         footprint.style.setProperty('--footprint-angle', `${angle + 90}deg`)
@@ -294,14 +299,15 @@ function initWalkingDog() {
         track.insertBefore(footprint, dog)
         state.activeFootprints.push(footprint)
 
-        while (state.activeFootprints.length > 25) {
+        const footprintLimit = state.easterEggActive ? 60 : 25
+        while (state.activeFootprints.length > footprintLimit) {
             removeFootprint(state.activeFootprints[0])
         }
     }
 
-    const scheduleFootprints = (start, target, angle, duration) => {
+    const scheduleFootprints = (start, target, angle, duration, options = {}) => {
         const distance = Math.hypot(target.x - start.x, target.y - start.y)
-        const spacing = usesMobileRoute() ? 24 : 31
+        const spacing = options.spacing || (usesMobileRoute() ? 24 : 31)
         const timers = []
         let nextDistance = spacing - state.footprintDistance
 
@@ -312,7 +318,10 @@ function initWalkingDog() {
                 x: start.x + (target.x - start.x) * progress,
                 y: start.y + (target.y - start.y) * progress
             }
-            const timer = setTimeout(() => leaveFootprint(point, angle, side), duration * progress)
+            const timer = setTimeout(
+                () => leaveFootprint(point, angle, side, Boolean(options.easterEgg)),
+                duration * progress
+            )
             timers.push(timer)
             state.footprintSide *= -1
             nextDistance += spacing
@@ -420,6 +429,89 @@ function initWalkingDog() {
         return dog.isConnected
     }
 
+    const captureCurrentPose = () => {
+        const rect = dog.getBoundingClientRect()
+        const transform = getComputedStyle(dog).transform
+        let angle = state.currentAngle
+
+        if (transform && transform !== 'none') {
+            try {
+                const matrix = new DOMMatrixReadOnly(transform)
+                angle = Math.atan2(matrix.b, matrix.a) * 180 / Math.PI
+            } catch {
+                // Keep the last known angle on browsers without DOMMatrixReadOnly.
+            }
+        }
+
+        return {
+            point: {
+                x: rect.left + rect.width / 2,
+                y: rect.top + rect.height / 2
+            },
+            angle
+        }
+    }
+
+    const buildHeartPath = (metrics, origin) => {
+        const zones = getFreeZones(metrics).map((zone) => {
+            const width = zone.right - zone.left
+            const height = zone.bottom - zone.top
+            return {
+                ...zone,
+                width,
+                height,
+                score: Math.min(width / 32, height / 29)
+            }
+        }).filter((zone) => zone.width >= 52 && zone.height >= 46)
+
+        const containingZone = zones.find((candidate) => (
+            origin &&
+            origin.x >= candidate.left && origin.x <= candidate.right &&
+            origin.y >= candidate.top && origin.y <= candidate.bottom
+        ))
+        const zone = containingZone || zones.sort((first, second) => {
+            if (!origin) return second.score - first.score
+            const distanceTo = (candidate) => {
+                const x = clamp(origin.x, candidate.left, candidate.right)
+                const y = clamp(origin.y, candidate.top, candidate.bottom)
+                return Math.hypot(origin.x - x, origin.y - y)
+            }
+            return distanceTo(first) - distanceTo(second) || second.score - first.score
+        })[0]
+        if (!zone) return []
+
+        const scale = Math.min((zone.width - 12) / 32, (zone.height - 12) / 29)
+        const centerX = (zone.left + zone.right) / 2
+        const centerY = (zone.top + zone.bottom) / 2 - scale * 2.5
+        const points = []
+        const steps = 40
+
+        for (let step = 0; step <= steps; step += 1) {
+            const angle = step / steps * Math.PI * 2
+            const x = 16 * Math.sin(angle) ** 3
+            const y = 13 * Math.cos(angle) - 5 * Math.cos(2 * angle) -
+                2 * Math.cos(3 * angle) - Math.cos(4 * angle)
+            points.push({
+                x: centerX + x * scale,
+                y: centerY - y * scale
+            })
+        }
+        return points
+    }
+
+    const showEasterEggMessage = async () => {
+        const message = document.createElement('div')
+        message.className = 'easter-egg-message'
+        message.setAttribute('role', 'status')
+        message.textContent = 'Te elegiría en todas mis vidas, ratita 💗'
+        document.body.appendChild(message)
+        requestAnimationFrame(() => message.classList.add('is-visible'))
+        await wait(4200)
+        message.classList.remove('is-visible')
+        await wait(350)
+        message.remove()
+    }
+
     const addLinePoints = (points, start, end, spacing = 12) => {
         const distance = Math.hypot(end.x - start.x, end.y - start.y)
         const steps = Math.max(1, Math.ceil(distance / spacing))
@@ -495,6 +587,35 @@ function initWalkingDog() {
         return points
     }
 
+    const buildMobileRouteTo = (target) => {
+        if (!usesMobileRoute() || !state.currentPoint) return null
+
+        const points = buildMobileLoop()
+        const closestIndexTo = (point) => points.reduce((closestIndex, candidate, index) => (
+            Math.hypot(candidate.x - point.x, candidate.y - point.y) <
+            Math.hypot(points[closestIndex].x - point.x, points[closestIndex].y - point.y)
+                ? index
+                : closestIndex
+        ), 0)
+        const startIndex = closestIndexTo(state.currentPoint)
+        const endIndex = closestIndexTo(target)
+        const forwardSteps = (endIndex - startIndex + points.length) % points.length
+        const backwardSteps = (startIndex - endIndex + points.length) % points.length
+        const direction = forwardSteps <= backwardSteps ? 1 : -1
+        const route = [state.currentPoint]
+        let index = startIndex
+
+        if (Math.hypot(points[index].x - state.currentPoint.x, points[index].y - state.currentPoint.y) > 0.5) {
+            route.push(points[index])
+        }
+        while (index !== endIndex) {
+            index = (index + direction + points.length) % points.length
+            route.push(points[index])
+        }
+        route.push(target)
+        return route
+    }
+
     const walkMobileStep = async (target, speed = 68) => {
         setDogVisual('walk')
         const start = state.currentPoint
@@ -504,6 +625,38 @@ function initWalkingDog() {
         const distance = Math.hypot(target.x - start.x, target.y - start.y)
         const duration = Math.max(90, distance / speed * 1000)
         const footprintTimers = scheduleFootprints(start, target, nextAngle, duration)
+        const completed = await runAnimation(
+            [
+                { transform: transformFor(start, state.currentAngle) },
+                { transform: transformFor(target, nextAngle) }
+            ],
+            { duration, easing: 'linear' }
+        )
+        if (!completed) {
+            cancelFootprintTimers(footprintTimers)
+            return false
+        }
+
+        dog.style.transform = transformFor(target, nextAngle)
+        state.currentPoint = target
+        state.currentAngle = nextAngle
+        return true
+    }
+
+    const walkEasterEggStep = async (target, speed = 90, drawsHeart = false) => {
+        setDogVisual('walk')
+        const start = state.currentPoint
+        const distance = Math.hypot(target.x - start.x, target.y - start.y)
+        if (distance < 0.5) return true
+
+        const heading = Math.atan2(target.y - start.y, target.x - start.x) * 180 / Math.PI
+        const angleDelta = ((heading - state.currentAngle + 540) % 360) - 180
+        const nextAngle = state.currentAngle + angleDelta
+        const duration = Math.max(75, distance / speed * 1000)
+        const footprintTimers = scheduleFootprints(start, target, nextAngle, duration, {
+            spacing: drawsHeart ? 10 : (usesMobileRoute() ? 22 : 28),
+            easterEgg: drawsHeart
+        })
         const completed = await runAnimation(
             [
                 { transform: transformFor(start, state.currentAngle) },
@@ -550,21 +703,54 @@ function initWalkingDog() {
 
     const roamMobile = async () => {
         while (dog.isConnected && usesMobileRoute()) {
+            if (state.easterEggActive) {
+                await wait(100)
+                continue
+            }
+
             fitDogToSidePassage()
             const points = buildMobileLoop()
             const version = state.layoutVersion
             const direction = Math.random() < 0.5 ? 1 : -1
-            let index = Math.floor(Math.random() * points.length)
-            const nextIndex = (index + direction + points.length) % points.length
-            state.currentPoint = points[index]
-            state.currentAngle = Math.atan2(
-                points[nextIndex].y - points[index].y,
-                points[nextIndex].x - points[index].x
-            ) * 180 / Math.PI
-            dog.style.transform = transformFor(state.currentPoint, state.currentAngle)
+            let index
+
+            if (state.resumeMobileRoute && state.currentPoint) {
+                index = points.reduce((closestIndex, point, pointIndex) => {
+                    const closestDistance = Math.hypot(
+                        points[closestIndex].x - state.currentPoint.x,
+                        points[closestIndex].y - state.currentPoint.y
+                    )
+                    const distance = Math.hypot(point.x - state.currentPoint.x, point.y - state.currentPoint.y)
+                    return distance < closestDistance ? pointIndex : closestIndex
+                }, 0)
+                const resumeRoute = planRoute(state.currentPoint, points[index], getMetrics())
+                if (!resumeRoute) {
+                    await wait(120)
+                    continue
+                }
+                state.resumeMobileRoute = false
+                for (const point of resumeRoute.slice(1)) {
+                    if (state.easterEggActive || version !== state.layoutVersion || !await walkEasterEggStep(point, 120)) break
+                }
+                if (state.easterEggActive || version !== state.layoutVersion) continue
+            } else {
+                index = Math.floor(Math.random() * points.length)
+                const nextIndex = (index + direction + points.length) % points.length
+                state.currentPoint = points[index]
+                state.currentAngle = Math.atan2(
+                    points[nextIndex].y - points[index].y,
+                    points[nextIndex].x - points[index].x
+                ) * 180 / Math.PI
+                dog.style.transform = transformFor(state.currentPoint, state.currentAngle)
+            }
             dog.style.opacity = '1'
 
-            while (dog.isConnected && version === state.layoutVersion && usesMobileRoute()) {
+            while (
+                dog.isConnected &&
+                version === state.layoutVersion &&
+                usesMobileRoute() &&
+                !state.easterEggActive
+            ) {
                 index = (index + direction + points.length) % points.length
                 const routePoint = points[index]
                 if (!await walkMobileStep(routePoint)) break
@@ -692,6 +878,89 @@ function initWalkingDog() {
         return false
     }
 
+    const triggerEasterEgg = async () => {
+        if (state.easterEggActive) return
+
+        state.easterEggActive = true
+        state.easterEggTapCount = 0
+        clearTimeout(state.easterEggTapTimer)
+        state.easterEggTapTimer = null
+
+        const pose = captureCurrentPose()
+        state.layoutVersion += 1
+        state.activeAnimation?.cancel()
+        state.pausedTapAnimation = null
+        await wait(60)
+
+        state.currentPoint = pose.point
+        state.currentAngle = pose.angle
+        state.footprintDistance = 0
+        dog.style.transform = transformFor(state.currentPoint, state.currentAngle)
+        dog.style.opacity = '1'
+
+        try {
+            const metrics = getMetrics()
+            const heartPath = buildHeartPath(metrics, state.currentPoint)
+            if (heartPath.length) {
+                const route = planRoute(state.currentPoint, heartPath[0], metrics) || buildMobileRouteTo(heartPath[0]) || (
+                    segmentIsSafe(state.currentPoint, heartPath[0], metrics)
+                        ? [state.currentPoint, heartPath[0]]
+                        : null
+                )
+                if (route) {
+                    for (const point of route.slice(1)) {
+                        if (!await walkEasterEggStep(point, 145)) break
+                    }
+
+                    state.footprintDistance = 0
+                    for (const point of heartPath.slice(1)) {
+                        if (!await walkEasterEggStep(point, 88, true)) break
+                    }
+                }
+            }
+
+            setDogVisual('idle')
+            await showEasterEggMessage()
+        } finally {
+            scheduleNextLick()
+            state.resumeMobileRoute = usesMobileRoute()
+            state.easterEggActive = false
+        }
+    }
+
+    const resetEasterEggTaps = () => {
+        state.easterEggTapCount = 0
+        state.easterEggTapTimer = null
+        if (
+            state.pausedTapAnimation &&
+            state.pausedTapAnimation === state.activeAnimation &&
+            state.pausedTapAnimation.playState === 'paused'
+        ) {
+            state.pausedTapAnimation.play()
+        }
+        state.pausedTapAnimation = null
+    }
+
+    const handleDogTap = (event) => {
+        event.preventDefault()
+        if (state.easterEggActive) return
+
+        if (state.easterEggTapCount === 0 && state.activeAnimation) {
+            state.pausedTapAnimation = state.activeAnimation
+            state.pausedTapAnimation.pause()
+        }
+
+        state.easterEggTapCount += 1
+        clearTimeout(state.easterEggTapTimer)
+
+        if (state.easterEggTapCount >= 5) {
+            void triggerEasterEgg()
+            return
+        }
+
+        state.easterEggTapTimer = setTimeout(resetEasterEggTaps, 2600)
+    }
+
     const roam = async () => {
         fitDogToSidePassage()
 
@@ -707,6 +976,11 @@ function initWalkingDog() {
         dog.style.opacity = '1'
 
         while (dog.isConnected) {
+            if (state.easterEggActive) {
+                await wait(100)
+                continue
+            }
+
             metrics = getMetrics()
             const version = state.layoutVersion
             let route = null
@@ -730,6 +1004,7 @@ function initWalkingDog() {
             if (version === state.layoutVersion && performance.now() >= state.nextLickAt) {
                 await visitPhotoForLick(metrics, version)
             }
+            if (state.easterEggActive) continue
             setDogVisual('idle')
             await wait(120 + Math.random() * 300)
             setDogVisual('walk')
@@ -743,6 +1018,7 @@ function initWalkingDog() {
     }
 
     window.addEventListener('resize', resetLayout, { passive: true })
+    dog.addEventListener('pointerdown', handleDogTap)
 
     const startRoaming = async () => {
         await Promise.race([dogVisualsReady, wait(900)])
