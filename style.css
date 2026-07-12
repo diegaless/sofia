@@ -343,26 +343,26 @@ h1 {
     }
 }
 
-.dog-tongue {
+.dog-tongue-accent {
     --tongue-angle: 0deg;
     position: absolute;
-    height: clamp(4px, 1.2vw, 7px);
+    height: clamp(3px, 1vw, 6px);
     border-radius: 999px 70% 70% 999px;
-    background: linear-gradient(90deg, #ff5c9a, #ff8fba);
-    box-shadow: 0 1px 3px rgba(177, 31, 93, 0.28);
+    background: linear-gradient(90deg, #ff5c9a, #ff9bc2);
+    box-shadow: 0 1px 2px rgba(177, 31, 93, 0.22);
     transform-origin: 0 50%;
-    animation: tongueLick 0.5s ease-in-out 3;
+    animation: tongueAccentLick 0.5s ease-in-out 3;
     pointer-events: none;
     z-index: 3;
 }
 
-@keyframes tongueLick {
+@keyframes tongueAccentLick {
     0%, 100% {
         opacity: 0;
-        transform: translateY(-50%) rotate(var(--tongue-angle)) scaleX(0.12);
+        transform: translateY(-50%) rotate(var(--tongue-angle)) scaleX(0.15);
     }
     32%, 68% {
-        opacity: 1;
+        opacity: 0.92;
         transform: translateY(-50%) rotate(var(--tongue-angle)) scaleX(1);
     }
 }

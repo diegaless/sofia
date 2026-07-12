@@ -48,6 +48,16 @@ function initWalkingDog() {
         activeFootprints: [],
         nextLickAt: 0
     }
+    const dogVisuals = {
+        walk: 'assets/walking-dachshund-top-animated.webp?v=3',
+        idle: 'assets/walking-dachshund-idle-wag.webp?v=1',
+        lick: 'assets/walking-dachshund-licking.webp?v=1'
+    }
+    const preloadedDogVisuals = Object.values(dogVisuals).map((src) => {
+        const image = new Image()
+        image.src = src
+        return image
+    })
 
     const randomBetween = (min, max) => min + Math.random() * Math.max(0, max - min)
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
@@ -57,7 +67,14 @@ function initWalkingDog() {
     const usesMobileRoute = () => (
         window.innerWidth <= 700 && window.innerHeight >= window.innerWidth
     )
+    const setDogVisual = (visual) => {
+        if (dog.dataset.visual === visual) return
+        dog.src = dogVisuals[visual]
+        dog.dataset.visual = visual
+    }
 
+    void preloadedDogVisuals
+    dog.dataset.visual = 'walk'
     scheduleNextLick(true)
 
     const fitDogToSidePassage = () => {
@@ -318,6 +335,7 @@ function initWalkingDog() {
     }
 
     const walkBackward = async (target) => {
+        setDogVisual('walk')
         const start = state.currentPoint
         const angle = state.currentAngle
         const distance = Math.hypot(target.x - start.x, target.y - start.y)
@@ -347,6 +365,7 @@ function initWalkingDog() {
         const facingTransform = transformFor(point, facingAngle)
 
         if (Math.abs(angleDelta) > 1) {
+            setDogVisual('idle')
             const turned = await runAnimation(
                 [{ transform: transformFor(point, state.currentAngle) }, { transform: facingTransform }],
                 { duration: clamp(Math.abs(angleDelta) * 5, 180, 780), easing: 'ease-in-out' }
@@ -354,18 +373,19 @@ function initWalkingDog() {
             if (!turned) return false
         }
 
-        const tongue = document.createElement('span')
-        const tongueWidth = clamp(state.dogWidth * 0.1, 7, 15)
-        const headDistance = state.dogWidth * 0.47
+        setDogVisual('lick')
         const forwardDistance = clamp(state.dogWidth * 0.03, 2, 5)
+        const tongue = document.createElement('span')
+        const tongueWidth = clamp(state.dogWidth * 0.11, 6, 12)
+        const tongueOrigin = state.dogWidth * 0.47 + forwardDistance
         const forwardPoint = {
             x: point.x + Math.cos(radians) * forwardDistance,
             y: point.y + Math.sin(radians) * forwardDistance
         }
 
-        tongue.className = 'dog-tongue'
-        tongue.style.left = `${point.x + Math.cos(radians) * (headDistance + forwardDistance)}px`
-        tongue.style.top = `${point.y + Math.sin(radians) * (headDistance + forwardDistance)}px`
+        tongue.className = 'dog-tongue-accent'
+        tongue.style.left = `${point.x + Math.cos(radians) * tongueOrigin}px`
+        tongue.style.top = `${point.y + Math.sin(radians) * tongueOrigin}px`
         tongue.style.width = `${tongueWidth}px`
         tongue.style.setProperty('--tongue-angle', `${facingAngle}deg`)
         track.appendChild(tongue)
@@ -383,8 +403,12 @@ function initWalkingDog() {
             { duration: 1500, easing: 'ease-in-out' }
         )
         tongue.remove()
-        if (!licked) return false
+        if (!licked) {
+            setDogVisual('walk')
+            return false
+        }
 
+        setDogVisual('idle')
         dog.style.transform = facingTransform
         state.currentPoint = point
         state.currentAngle = facingAngle
@@ -393,6 +417,12 @@ function initWalkingDog() {
     }
 
     const wait = (duration) => new Promise((resolve) => setTimeout(resolve, duration))
+
+    const pauseAndWag = async (duration = 850) => {
+        setDogVisual('idle')
+        await wait(duration)
+        return dog.isConnected
+    }
 
     const addLinePoints = (points, start, end, spacing = 12) => {
         const distance = Math.hypot(end.x - start.x, end.y - start.y)
@@ -469,13 +499,14 @@ function initWalkingDog() {
         return points
     }
 
-    const walkMobileStep = async (target) => {
+    const walkMobileStep = async (target, speed = 68) => {
+        setDogVisual('walk')
         const start = state.currentPoint
         const heading = Math.atan2(target.y - start.y, target.x - start.x) * 180 / Math.PI
         const angleDelta = ((heading - state.currentAngle + 540) % 360) - 180
         const nextAngle = state.currentAngle + angleDelta
         const distance = Math.hypot(target.x - start.x, target.y - start.y)
-        const duration = Math.max(90, distance / 68 * 1000)
+        const duration = Math.max(90, distance / speed * 1000)
         const footprintTimers = scheduleFootprints(start, target, nextAngle, duration)
         const completed = await runAnimation(
             [
@@ -544,7 +575,8 @@ function initWalkingDog() {
 
                 const lickSpot = getMobileLickSpot(routePoint)
                 if (lickSpot) {
-                    if (!await walkMobileStep(lickSpot.point)) break
+                    if (!await pauseAndWag()) break
+                    if (!await walkMobileStep(lickSpot.point, 42)) break
                     if (!await lickPhoto(lickSpot.point, lickSpot.angle)) break
                     if (!await walkBackward(routePoint)) break
                 }
@@ -552,7 +584,7 @@ function initWalkingDog() {
         }
     }
 
-    const walkSegment = async (target) => {
+    const walkSegment = async (target, speed = 78) => {
         const start = state.currentPoint
         const heading = Math.atan2(target.y - start.y, target.x - start.x) * 180 / Math.PI
         const angleDelta = ((heading - state.currentAngle + 540) % 360) - 180
@@ -562,6 +594,7 @@ function initWalkingDog() {
         const targetTransform = transformFor(target, nextAngle)
 
         if (Math.abs(angleDelta) > 1) {
+            setDogVisual('idle')
             const turned = await runAnimation(
                 [{ transform: startTransform }, { transform: turnedTransform }],
                 { duration: clamp(Math.abs(angleDelta) * 5, 180, 850), easing: 'ease-in-out' }
@@ -569,8 +602,9 @@ function initWalkingDog() {
             if (!turned) return false
         }
 
+        setDogVisual('walk')
         const distance = Math.hypot(target.x - start.x, target.y - start.y)
-        const duration = Math.max(450, distance / 78 * 1000)
+        const duration = Math.max(450, distance / speed * 1000)
         const footprintTimers = scheduleFootprints(start, target, nextAngle, duration)
         const completed = await runAnimation(
             [{ transform: turnedTransform }, { transform: targetTransform }],
@@ -641,7 +675,8 @@ function initWalkingDog() {
                 }
             }
             if (!reachedPhoto || version !== state.layoutVersion) return false
-            if (!await walkSegment(candidate.lick)) return false
+            if (!await pauseAndWag()) return false
+            if (!await walkSegment(candidate.lick, 46)) return false
             if (!await lickPhoto(candidate.lick, candidate.angle)) return false
             if (!await walkBackward(candidate.safe)) return false
             return true
@@ -689,7 +724,9 @@ function initWalkingDog() {
             if (version === state.layoutVersion && performance.now() >= state.nextLickAt) {
                 await visitPhotoForLick(metrics, version)
             }
+            setDogVisual('idle')
             await wait(120 + Math.random() * 300)
+            setDogVisual('walk')
         }
     }
 

@@ -30,3 +30,9 @@ python3 scripts/build-imagegen-gifs.py
 Las fotos `20260622_113357.jpg` y `20260622_113403.jpg` se usaron como referencias de identidad del mismo perro. El prompt base pidió fotografía natural de estudio del salchicha adulto de pelaje corto chocolate oscuro, ojos avellana, hocico largo, orejas caídas y cuerpo redondeado, sobre fondo rosa claro. Las siete variantes conservaron el mismo perro y cambiaron únicamente pose y emoción: confuso, suplicando, triste, una lágrima, devastado, sollozando tumbado y huyendo mientras llora.
 
 Los PNG originales están en `assets/imagegen-realista-sources/` y los GIFs derivados en `assets/gifs-imagegen-realista/`.
+
+## Estados cenitales del perro de la página final
+
+Los estados `walking-dachshund-idle-wag.webp` y `walking-dachshund-licking.webp` se generaron con la herramienta integrada de ImageGen usando como referencias la fotografía original del perro y el fotograma cenital existente. Los prompts conservaron identidad, escala y cámara vertical a 90 grados; pidieron las cuatro patas quietas, dos posiciones opuestas de la cola y, para el lamido, la cabeza baja con la lengua extendida. Las imágenes se generaron sobre fondo cromático verde uniforme, se recortaron localmente y se convirtieron en WebP animado con transparencia.
+
+Los fotogramas y las fuentes cromáticas están en `assets/dog-states/`.
