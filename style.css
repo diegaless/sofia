@@ -278,10 +278,10 @@ h1 {
     left: 0;
     width: clamp(110px, 16vw, 180px);
     aspect-ratio: 580 / 260;
-    filter: drop-shadow(0 8px 8px rgba(88, 34, 58, 0.22));
     transform-origin: center;
     transform-style: preserve-3d;
     backface-visibility: visible;
+    isolation: isolate;
     opacity: 0;
     will-change: transform;
     z-index: 2;
@@ -294,12 +294,19 @@ h1 {
     height: 100%;
     object-fit: contain;
     opacity: 0;
-    transition: opacity 190ms ease-in-out;
+    transition: opacity 150ms ease-in-out;
+    backface-visibility: hidden;
     will-change: opacity;
 }
 
 .walking-dog-layer.is-active {
     opacity: 1;
+}
+
+@media (max-width: 700px) {
+    .walking-dog-layer {
+        transition: none;
+    }
 }
 
 .dog-footprint {
@@ -355,30 +362,6 @@ h1 {
     100% {
         opacity: 0;
         transform: translate(-50%, -50%) rotate(var(--footprint-angle)) scale(0.88);
-    }
-}
-
-.dog-tongue-accent {
-    --tongue-angle: 0deg;
-    position: absolute;
-    height: clamp(3px, 1vw, 6px);
-    border-radius: 999px 70% 70% 999px;
-    background: linear-gradient(90deg, #ff5c9a, #ff9bc2);
-    box-shadow: 0 1px 2px rgba(177, 31, 93, 0.22);
-    transform-origin: 0 50%;
-    animation: tongueAccentLick 0.5s ease-in-out 3;
-    pointer-events: none;
-    z-index: 3;
-}
-
-@keyframes tongueAccentLick {
-    0%, 100% {
-        opacity: 0;
-        transform: translateY(-50%) rotate(var(--tongue-angle)) scaleX(0.15);
-    }
-    32%, 68% {
-        opacity: 0.92;
-        transform: translateY(-50%) rotate(var(--tongue-angle)) scaleX(1);
     }
 }
 

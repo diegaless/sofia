@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="assets/favicon-sofia-diego.png">
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 </head>
 <body>
@@ -28,8 +28,9 @@
 
     <div class="walking-dog-track" aria-hidden="true">
         <div class="walking-dog" data-visual="walk">
-            <img class="walking-dog-layer is-active" src="assets/walking-dachshund-top-animated.webp?v=3" alt="">
-            <img class="walking-dog-layer" src="assets/walking-dachshund-top-animated.webp?v=3" alt="">
+            <img class="walking-dog-layer is-active" data-visual="walk" src="assets/walking-dachshund-top-animated.webp?v=3" alt="">
+            <img class="walking-dog-layer" data-visual="idle" src="assets/walking-dachshund-idle-wag.webp?v=1" alt="">
+            <img class="walking-dog-layer" data-visual="lick" src="assets/walking-dachshund-licking.webp?v=1" alt="">
         </div>
     </div>
 
@@ -39,6 +40,6 @@
 
     <button id="music-toggle" type="button" aria-label="Silenciar música" aria-pressed="true" title="Silenciar música">🔊</button>
 
-    <script src="yes-script.js?v=9"></script>
+    <script src="yes-script.js?v=10"></script>
 </body>
 </html>

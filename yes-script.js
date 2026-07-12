@@ -48,20 +48,10 @@ function initWalkingDog() {
         footprintDistance: 0,
         footprintSide: -1,
         activeFootprints: [],
-        nextLickAt: 0,
-        activeVisualLayer: 0
+        nextLickAt: 0
     }
-    const dogVisuals = {
-        walk: 'assets/walking-dachshund-top-animated.webp?v=3',
-        idle: 'assets/walking-dachshund-idle-wag.webp?v=1',
-        lick: 'assets/walking-dachshund-licking.webp?v=1'
-    }
-    const preloadedDogVisuals = Object.values(dogVisuals).map((src) => {
-        const image = new Image()
-        image.src = src
-        return image
-    })
-    const dogVisualsReady = Promise.all(preloadedDogVisuals.map((image) => (
+    const dogMouthForwardRatio = 274 / 580
+    const dogVisualsReady = Promise.all(dogLayers.map((image) => (
         typeof image.decode === 'function'
             ? image.decode().catch(() => undefined)
             : Promise.resolve()
@@ -78,14 +68,12 @@ function initWalkingDog() {
     const setDogVisual = (visual) => {
         if (dog.dataset.visual === visual) return
 
-        const currentLayer = dogLayers[state.activeVisualLayer]
-        const nextLayerIndex = (state.activeVisualLayer + 1) % dogLayers.length
-        const nextLayer = dogLayers[nextLayerIndex]
+        const currentLayer = dogLayers.find((layer) => layer.classList.contains('is-active'))
+        const nextLayer = dogLayers.find((layer) => layer.dataset.visual === visual)
+        if (!nextLayer) return
 
-        nextLayer.src = dogVisuals[visual]
         nextLayer.classList.add('is-active')
-        currentLayer.classList.remove('is-active')
-        state.activeVisualLayer = nextLayerIndex
+        currentLayer?.classList.remove('is-active')
         dog.dataset.visual = visual
     }
 
@@ -389,20 +377,10 @@ function initWalkingDog() {
 
         setDogVisual('lick')
         const forwardDistance = clamp(state.dogWidth * 0.03, 2, 5)
-        const tongue = document.createElement('span')
-        const tongueWidth = clamp(state.dogWidth * 0.11, 6, 12)
-        const tongueOrigin = state.dogWidth * 0.47 + forwardDistance
         const forwardPoint = {
             x: point.x + Math.cos(radians) * forwardDistance,
             y: point.y + Math.sin(radians) * forwardDistance
         }
-
-        tongue.className = 'dog-tongue-accent'
-        tongue.style.left = `${point.x + Math.cos(radians) * tongueOrigin}px`
-        tongue.style.top = `${point.y + Math.sin(radians) * tongueOrigin}px`
-        tongue.style.width = `${tongueWidth}px`
-        tongue.style.setProperty('--tongue-angle', `${facingAngle}deg`)
-        track.appendChild(tongue)
 
         const licked = await runAnimation(
             [
@@ -416,7 +394,6 @@ function initWalkingDog() {
             ],
             { duration: 1500, easing: 'ease-in-out' }
         )
-        tongue.remove()
         if (!licked) {
             setDogVisual('walk')
             return false
@@ -552,14 +529,14 @@ function initWalkingDog() {
         if (routePoint.y < photoRect.top) {
             const safetyDistance = clamp(state.dogWidth * 0.03, 2, 5) + 2
             return {
-                point: { x: routePoint.x, y: photoRect.top - state.dogWidth / 2 - safetyDistance },
+                point: { x: routePoint.x, y: photoRect.top - state.dogWidth * dogMouthForwardRatio - safetyDistance },
                 angle: 90
             }
         }
         if (routePoint.y > photoRect.bottom) {
             const safetyDistance = clamp(state.dogWidth * 0.03, 2, 5) + 2
             return {
-                point: { x: routePoint.x, y: photoRect.bottom + state.dogWidth / 2 + safetyDistance },
+                point: { x: routePoint.x, y: photoRect.bottom + state.dogWidth * dogMouthForwardRatio + safetyDistance },
                 angle: -90
             }
         }
@@ -660,7 +637,7 @@ function initWalkingDog() {
         const centerX = photoRect.left + photoRect.width / 2
         const centerY = photoRect.top + photoRect.height / 2
         const safetyDistance = clamp(state.dogWidth * 0.03, 2, 5) + 2
-        const approachDistance = state.dogWidth / 2 + safetyDistance
+        const approachDistance = state.dogWidth * dogMouthForwardRatio + safetyDistance
         const candidates = [
             {
                 safe: { x: metrics.obstacle.left - 3, y: centerY },
