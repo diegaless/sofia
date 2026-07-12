@@ -329,7 +329,11 @@ h1 {
 .dog-footprint.easter-egg-footprint {
     color: rgba(214, 51, 132, 0.9);
     filter: drop-shadow(0 2px 3px rgba(214, 51, 132, 0.22));
-    animation-duration: 18s;
+    animation: easterEggFootprintAppear 320ms ease-out both;
+}
+
+.dog-footprint.easter-egg-footprint.is-fading {
+    animation: easterEggFootprintFade 1.4s ease-in forwards;
 }
 
 .dog-footprint::before {
@@ -373,6 +377,28 @@ h1 {
     100% {
         opacity: 0;
         transform: translate(-50%, -50%) rotate(var(--footprint-angle)) scale(0.88);
+    }
+}
+
+@keyframes easterEggFootprintAppear {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(var(--footprint-angle)) scale(0.55);
+    }
+    to {
+        opacity: 0.82;
+        transform: translate(-50%, -50%) rotate(var(--footprint-angle)) scale(1);
+    }
+}
+
+@keyframes easterEggFootprintFade {
+    from {
+        opacity: 0.82;
+        transform: translate(-50%, -50%) rotate(var(--footprint-angle)) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(var(--footprint-angle)) scale(0.82);
     }
 }
 

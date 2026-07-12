@@ -295,11 +295,13 @@ function initWalkingDog() {
         footprint.style.left = `${x}px`
         footprint.style.top = `${y}px`
         footprint.style.setProperty('--footprint-angle', `${angle + 90}deg`)
-        footprint.addEventListener('animationend', () => removeFootprint(footprint), { once: true })
+        if (!easterEgg) {
+            footprint.addEventListener('animationend', () => removeFootprint(footprint), { once: true })
+        }
         track.insertBefore(footprint, dog)
         state.activeFootprints.push(footprint)
 
-        const footprintLimit = state.easterEggActive ? 60 : 25
+        const footprintLimit = state.easterEggActive ? 140 : 25
         while (state.activeFootprints.length > footprintLimit) {
             removeFootprint(state.activeFootprints[0])
         }
@@ -510,6 +512,15 @@ function initWalkingDog() {
         message.classList.remove('is-visible')
         await wait(350)
         message.remove()
+    }
+
+    const fadeEasterEggFootprints = async () => {
+        const footprints = state.activeFootprints.filter((footprint) => (
+            footprint.classList.contains('easter-egg-footprint')
+        ))
+        footprints.forEach((footprint) => footprint.classList.add('is-fading'))
+        await wait(1450)
+        footprints.forEach(removeFootprint)
     }
 
     const addLinePoints = (points, start, end, spacing = 12) => {
@@ -921,6 +932,7 @@ function initWalkingDog() {
 
             setDogVisual('idle')
             await showEasterEggMessage()
+            await fadeEasterEggFootprints()
         } finally {
             scheduleNextLick()
             state.resumeMobileRoute = usesMobileRoute()
