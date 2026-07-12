@@ -273,7 +273,7 @@ h1 {
 }
 
 .walking-dog-track.easter-egg-mode {
-    z-index: 81;
+    z-index: 83;
 }
 
 .walking-dog {
@@ -456,6 +456,43 @@ h1 {
 .easter-egg-message.is-visible {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
+}
+
+.easter-egg-signature {
+    --signature-duration: 2.4s;
+    position: fixed;
+    left: 50%;
+    width: max-content;
+    color: #c82578;
+    font-family: 'Pacifico', 'Segoe Script', cursive;
+    font-size: clamp(1.55rem, 7.5vw, 2.6rem);
+    line-height: 1.25;
+    white-space: nowrap;
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    transform: translate(-50%, -50%);
+    text-shadow: 0 3px 10px rgba(200, 37, 120, 0.2);
+    transition: opacity 360ms ease;
+    pointer-events: none;
+    z-index: 82;
+}
+
+.easter-egg-signature.is-writing {
+    opacity: 1;
+    animation: signatureWrite var(--signature-duration) linear forwards;
+}
+
+.easter-egg-signature.is-fading {
+    opacity: 0;
+}
+
+@keyframes signatureWrite {
+    from {
+        clip-path: inset(0 100% 0 0);
+    }
+    to {
+        clip-path: inset(0 0 0 0);
+    }
 }
 
 .easter-egg-backdrop {

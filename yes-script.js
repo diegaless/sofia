@@ -922,6 +922,76 @@ function initWalkingDog() {
         return false
     }
 
+    const writeEasterEggSignature = async (heartPath) => {
+        if (!heartPath.length) return null
+        if (document.fonts?.load) {
+            await document.fonts.load('1em Pacifico').catch(() => undefined)
+        }
+
+        const bounds = heartPath.reduce((result, point) => ({
+            minX: Math.min(result.minX, point.x),
+            maxX: Math.max(result.maxX, point.x),
+            minY: Math.min(result.minY, point.y),
+            maxY: Math.max(result.maxY, point.y)
+        }), { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity })
+        const heartWidth = bounds.maxX - bounds.minX
+        const heartHeight = bounds.maxY - bounds.minY
+        const centerX = (bounds.minX + bounds.maxX) / 2
+        const signatureY = bounds.minY + heartHeight * 0.54
+        const signature = document.createElement('div')
+        signature.className = 'easter-egg-signature'
+        signature.textContent = 'Sofía + Diego'
+        signature.style.top = `${signatureY}px`
+        document.body.appendChild(signature)
+
+        const maximumSignatureWidth = heartWidth * 0.68
+        if (signature.offsetWidth > maximumSignatureWidth) {
+            const fontSize = parseFloat(getComputedStyle(signature).fontSize)
+            signature.style.fontSize = `${fontSize * maximumSignatureWidth / signature.offsetWidth}px`
+        }
+
+        const signatureWidth = signature.offsetWidth
+        const dogWritingY = signatureY + clamp(state.dogHeight * 0.95, 17, 28)
+        const startPoint = {
+            x: clamp(
+                centerX - signatureWidth / 2 - state.dogWidth * 0.18,
+                state.dogWidth / 2 + 4,
+                window.innerWidth - state.dogWidth / 2 - 4
+            ),
+            y: dogWritingY
+        }
+        const endPoint = {
+            x: clamp(
+                centerX + signatureWidth / 2 + state.dogWidth * 0.18,
+                state.dogWidth / 2 + 4,
+                window.innerWidth - state.dogWidth / 2 - 4
+            ),
+            y: dogWritingY
+        }
+
+        await walkEasterEggStep(startPoint, 165, false, false)
+        const writingDistance = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y)
+        const duration = clamp(writingDistance / 70 * 1000, 1900, 3000)
+        const writingSpeed = writingDistance / (duration / 1000)
+        signature.style.setProperty('--signature-duration', `${duration}ms`)
+        await new Promise((resolve) => requestAnimationFrame(() => {
+            signature.classList.add('is-writing')
+            resolve()
+        }))
+        await Promise.all([
+            walkEasterEggStep(endPoint, writingSpeed, false, false),
+            wait(duration)
+        ])
+        return signature
+    }
+
+    const fadeEasterEggSignature = async (signature) => {
+        if (!signature) return
+        signature.classList.add('is-fading')
+        await wait(400)
+        signature.remove()
+    }
+
     const triggerEasterEgg = async () => {
         if (state.easterEggActive) return
 
@@ -945,6 +1015,7 @@ function initWalkingDog() {
             !footprint.classList.contains('easter-egg-footprint')
         )).forEach(removeFootprint)
         const backdrop = showEasterEggBackdrop()
+        let signature = null
 
         try {
             const heartPath = buildHeartPath()
@@ -954,11 +1025,13 @@ function initWalkingDog() {
                 for (const point of heartPath.slice(1)) {
                     if (!await walkEasterEggStep(point, 88, true)) break
                 }
+                signature = await writeEasterEggSignature(heartPath)
             }
 
             setDogVisual('idle')
             await showEasterEggMessage()
             const footprintFade = fadeEasterEggFootprints()
+            const signatureFade = fadeEasterEggSignature(signature)
             let exitPoint
             if (usesMobileRoute()) {
                 const mobilePoints = buildMobileLoop()
@@ -971,10 +1044,14 @@ function initWalkingDog() {
             } else {
                 exitPoint = randomFreePoint(getMetrics(), state.currentPoint)
             }
-            await walkEasterEggStep(exitPoint, 165, false, false)
-            await footprintFade
+            await Promise.all([
+                walkEasterEggStep(exitPoint, 165, false, false),
+                footprintFade,
+                signatureFade
+            ])
             setDogVisual('idle')
         } finally {
+            signature?.remove()
             await hideEasterEggBackdrop(backdrop)
             state.activeFootprints.filter((footprint) => (
                 footprint.classList.contains('easter-egg-footprint')
