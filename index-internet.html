@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Opción A · GIFs de internet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="assets/favicon-sofia-diego.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-gif-set="gifs-internet">
+    <a class="option-back" href="comparar-gifs.html">← Comparar opciones</a>
+    <div class="hearts-bg" aria-hidden="true"></div>
+
+    <main class="container">
+        <span class="option-badge">Opción A · Internet</span>
+        <h1>¿Quedamos el viernes si ya estás mejor? 💕</h1>
+
+        <figure class="gif-container">
+            <img id="cat-gif" src="assets/gifs-internet/stage-0-normal.gif" alt="Perro salchicha adorable animado">
+        </figure>
+
+        <div class="buttons">
+            <button id="yes-btn" type="button">Sí</button>
+            <button id="no-btn" type="button">No</button>
+        </div>
+        <div id="tease-toast" aria-live="polite"></div>
+    </main>
+
+    <audio id="bg-music" loop autoplay muted preload="auto">
+        <source src="music/beabadoobee - Glue Song (Lyrics).mp3" type="audio/mpeg">
+    </audio>
+    <button id="music-toggle" type="button" aria-label="Silenciar música" aria-pressed="true" title="Silenciar música">🔊</button>
+    <script src="script.js"></script>
+</body>
+</html>

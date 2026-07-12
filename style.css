@@ -20,6 +20,34 @@ body {
         radial-gradient(circle at 50% 50%, #fff0f3 0%, transparent 60%);
 }
 
+.option-back {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 110;
+    padding: 9px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.88);
+    color: #b42368;
+    font-weight: 800;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(150, 35, 95, 0.15);
+    backdrop-filter: blur(10px);
+}
+
+.option-badge {
+    display: inline-block;
+    margin-bottom: 12px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.75);
+    color: #b42368;
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
 /* Floating hearts background */
 .hearts-bg {
     position: fixed;
@@ -185,7 +213,7 @@ h1 {
 
 /* Yes page specific */
 .yes-container {
-    padding-bottom: max(88px, calc(72px + env(safe-area-inset-bottom)));
+    padding-bottom: max(110px, calc(92px + env(safe-area-inset-bottom)));
 }
 
 .yes-container h1.yes-title {
@@ -217,11 +245,8 @@ h1 {
 }
 
 .yes-container #cat-gif.ojitos-photo {
-    width: min(300px, 74vw);
-    height: min(390px, 48vh);
-    height: min(390px, 48svh);
-    object-fit: cover;
-    object-position: center;
+    width: min(640px, 88vw);
+    height: auto;
     border: 6px solid rgba(255, 255, 255, 0.92);
     border-radius: 32px;
     filter: none;
@@ -234,10 +259,31 @@ h1 {
     content: '💕';
     position: absolute;
     top: -16px;
-    right: calc(50% - min(150px, 37vw) - 16px);
+    right: calc(50% - min(320px, 44vw) - 16px);
     font-size: 2rem;
     transform: rotate(12deg);
     text-shadow: 0 5px 14px rgba(214, 51, 132, 0.35);
+}
+
+.walking-dog-track {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.walking-dog {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: clamp(110px, 16vw, 180px);
+    height: auto;
+    filter: drop-shadow(0 8px 8px rgba(88, 34, 58, 0.22));
+    transform-origin: center;
+    transform-style: preserve-3d;
+    backface-visibility: visible;
+    opacity: 0;
+    will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -260,5 +306,9 @@ h1 {
     #yes-btn:hover,
     #music-toggle:hover {
         transform: none;
+    }
+
+    .walking-dog-track {
+        display: none;
     }
 }

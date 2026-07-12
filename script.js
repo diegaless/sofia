@@ -1,31 +1,36 @@
+const gifSetName = document.body.dataset.gifSet || 'gifs'
+const gifAssetVersion = document.body.dataset.gifVersion
 const gifStages = [
-    'assets/gifs/stage-0-normal.gif',
-    'assets/gifs/stage-1-confused.gif',
-    'assets/gifs/stage-2-pleading.gif',
-    'assets/gifs/stage-3-sad.gif',
-    'assets/gifs/stage-4-sadder.gif',
-    'assets/gifs/stage-5-devastated.gif',
-    'assets/gifs/stage-6-very-devastated.gif',
-    'assets/gifs/stage-7-crying-runaway.gif'
-]
+    'stage-0-normal.gif',
+    'stage-1-confused.gif',
+    'stage-2-pleading.gif',
+    'stage-3-sad.gif',
+    'stage-4-sadder.gif',
+    'stage-5-devastated.gif',
+    'stage-6-very-devastated.gif',
+    'stage-7-crying-runaway.gif'
+].map((filename) => {
+    const src = `assets/${gifSetName}/${filename}`
+    return gifAssetVersion ? `${src}?v=${gifAssetVersion}` : src
+})
 
 const noMessages = [
     'No',
-    '¿Estás seguro/a? 🤔',
-    'Por favor, cariño... 🥺',
-    'Si dices que no, me pondré muy triste ojitos...',
-    'Estaré muy triste... 😢',
-    '¿Por favor??? 💔',
-    'No me hagas esto ojitos...',
+    '¿Estás segura, ratita? 🤔',
+    'Pero si hemos pasado un mes precioso... 🥺',
+    'Prometo que será un plan muy bonito 💕',
+    'Me vas a romper el corazoncito... 😢',
+    '¿Ni siquiera por nuestro primer mes? 💔',
+    'Ratita, piénsatelo una vez más...',
     '¡Última oportunidad! 😭',
-    'De todas formas no puedes pillarme 😜'
+    'Da igual, no puedes escapar de nuestro primer mes 😜'
 ]
 
 const yesTeasePokes = [
-    'prueba a decir que no primero... apuesto a que quieres saber qué pasa 😏',
-    'venga, pulsa no... solo una vez 👀',
-    'te lo estás perdiendo 😈',
-    'haz clic en no, te reto 😏'
+    '¿Así de fácil? Primero intenta decir que no 😏',
+    'Venga, pulsa “No” una vez... tengo una sorpresa 👀',
+    'Te estás perdiendo a la ratita dramática 😈',
+    'Pulsa “No”, te reto 😏'
 ]
 
 if (document.getElementById('bg-music')) {
@@ -71,7 +76,15 @@ function initPage() {
     elements.noBtn.addEventListener('click', () => handleNoClick(state, elements))
     elements.musicToggle.addEventListener('click', () => toggleMusic(state, elements))
 
+    preloadGifStages()
     initializeMusic(state, elements)
+}
+
+function preloadGifStages() {
+    gifStages.slice(1).forEach((src) => {
+        const image = new Image()
+        image.src = src
+    })
 }
 
 function initializeMusic(state, elements) {
@@ -131,7 +144,7 @@ function handleYesClick(state, elements) {
         return
     }
 
-    showYesScreen(state, elements)
+    showYesScreen(state)
 }
 
 function showTeaseMessage(state, teaseToast, msg) {
@@ -152,10 +165,10 @@ function handleNoClick(state, elements) {
     const msgIndex = Math.min(state.noClickCount, noMessages.length - 1)
     noBtn.textContent = noMessages[msgIndex]
 
-    growYesButton(yesBtn, state.noClickCount)
+    resizeYesButton(yesBtn, state.noClickCount)
 
     if (state.noClickCount >= 2) {
-        shrinkNoButton(noBtn)
+        resizeNoButton(noBtn, state.noClickCount)
     }
 
     const gifIndex = Math.min(state.noClickCount, gifStages.length - 1)
@@ -167,28 +180,45 @@ function handleNoClick(state, elements) {
     }
 }
 
-function growYesButton(yesBtn, noClickCount) {
-    const currentSize = parseFloat(window.getComputedStyle(yesBtn).fontSize)
+function resizeYesButton(yesBtn, noClickCount) {
+    const fontSize = 1.6 * (1.35 ** noClickCount)
     const padY = Math.min(18 + noClickCount * 5, 60)
     const padX = Math.min(45 + noClickCount * 10, 120)
 
-    yesBtn.style.setProperty('--yes-font-size', `${currentSize * 1.35}px`)
+    yesBtn.style.setProperty('--yes-font-size', `${fontSize}rem`)
     yesBtn.style.setProperty('--yes-pad-y', `${padY}px`)
     yesBtn.style.setProperty('--yes-pad-x', `${padX}px`)
 }
 
-function shrinkNoButton(noBtn) {
-    const noSize = parseFloat(window.getComputedStyle(noBtn).fontSize)
-    noBtn.style.setProperty('--no-font-size', `${Math.max(noSize * 0.85, 10)}px`)
+function resizeNoButton(noBtn, noClickCount) {
+    const fontSize = Math.max(0.625, 0.85 ** (noClickCount - 1))
+    noBtn.style.setProperty('--no-font-size', `${fontSize}rem`)
 }
 
-function swapGif(catGif, src) {
-    catGif.style.opacity = '0'
+let gifSwapId = 0
 
-    setTimeout(() => {
+function swapGif(catGif, src) {
+    const swapId = ++gifSwapId
+    const nextGif = new Image()
+
+    catGif.style.opacity = '0'
+    nextGif.src = src
+
+    const revealGif = () => {
+        if (swapId !== gifSwapId) {
+            return
+        }
         catGif.src = src
         catGif.style.opacity = '1'
-    }, 200)
+    }
+
+    if (typeof nextGif.decode === 'function') {
+        nextGif.decode().then(revealGif).catch(revealGif)
+        return
+    }
+
+    nextGif.onload = revealGif
+    nextGif.onerror = revealGif
 }
 
 function enableRunaway(noBtn) {
@@ -212,95 +242,11 @@ function runAway(noBtn) {
     noBtn.style.zIndex = '50'
 }
 
-function showYesScreen(state, elements) {
-    if (state.yesScreenVisible || !elements.container || !elements.title || !elements.buttons) {
+function showYesScreen(state) {
+    if (state.yesScreenVisible) {
         return
     }
 
     state.yesScreenVisible = true
-
-    document.title = '¡Sí! 🎉'
-    window.history.pushState({ screen: 'yes' }, '', 'yes.html')
-
-    elements.container.classList.add('yes-container')
-    elements.title.classList.add('yes-title')
-    elements.title.textContent = 'Sabía que ibas a decir que sí… 😏🎉'
-
-    elements.catGif.src = 'assets/ojitos.jpg'
-    elements.catGif.alt = 'Ojitos'
-    elements.catGif.classList.add('ojitos-photo')
-
-    elements.buttons.remove()
-    elements.teaseToast.remove()
-
-    const yesMessage = document.createElement('p')
-    yesMessage.className = 'yes-message'
-    yesMessage.textContent = 'Acabas de hacerme la persona más feliz del mundo 💕'
-    elements.container.appendChild(yesMessage)
-
-    ensureConfettiLoaded()
-        .then(() => {
-            if (typeof confetti === 'function') {
-                launchConfetti()
-            }
-        })
-        .catch(() => {})
-}
-
-let confettiScriptPromise = null
-
-function ensureConfettiLoaded() {
-    if (typeof confetti === 'function') {
-        return Promise.resolve()
-    }
-
-    if (confettiScriptPromise) {
-        return confettiScriptPromise
-    }
-
-    confettiScriptPromise = new Promise((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js'
-        script.onload = resolve
-        script.onerror = reject
-        document.head.appendChild(script)
-    })
-
-    return confettiScriptPromise
-}
-
-function launchConfetti() {
-    const colors = ['#ff69b4', '#ff1493', '#ff85a2', '#ffb3c1', '#ff0000', '#ff6347', '#fff', '#ffdf00']
-    const duration = 6000
-    const end = Date.now() + duration
-
-    confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { x: 0.5, y: 0.3 },
-        colors
-    })
-
-    const interval = setInterval(() => {
-        if (Date.now() > end) {
-            clearInterval(interval)
-            return
-        }
-
-        confetti({
-            particleCount: 40,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0, y: 0.6 },
-            colors
-        })
-
-        confetti({
-            particleCount: 40,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1, y: 0.6 },
-            colors
-        })
-    }, 300)
+    window.location.assign('yes.html')
 }
