@@ -20,14 +20,14 @@ function initPage() {
     musicToggle.addEventListener('click', () => toggleMusic(state, music, musicToggle))
 
     initializeMusic(state, music, musicToggle)
-    initWalkingDog()
+    initWalkingDog(music)
 
     if (!state.prefersReducedMotion) {
         launchConfetti()
     }
 }
 
-function initWalkingDog() {
+function initWalkingDog(music) {
     const track = document.querySelector('.walking-dog-track')
     const dog = document.querySelector('.walking-dog')
     const dogLayers = [...document.querySelectorAll('.walking-dog-layer')]
@@ -55,7 +55,8 @@ function initWalkingDog() {
         pausedTapAnimation: null,
         resumeMobileRoute: false,
         dogHintShown: false,
-        dogHintTimer: null
+        dogHintTimer: null,
+        activeVolumeFadeFrame: null
     }
     const dogMouthForwardRatio = 274 / 580
     const dogVisualsReady = Promise.all(dogLayers.map((image) => (
@@ -66,6 +67,25 @@ function initWalkingDog() {
 
     const randomBetween = (min, max) => min + Math.random() * Math.max(0, max - min)
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
+    const fadeMusicVolume = (targetVolume, duration) => {
+        cancelAnimationFrame(state.activeVolumeFadeFrame)
+        const startVolume = music.volume
+        const volumeDifference = clamp(targetVolume, 0, 1) - startVolume
+        const startedAt = performance.now()
+
+        const updateVolume = (now) => {
+            const progress = clamp((now - startedAt) / duration, 0, 1)
+            const easedProgress = progress * progress * (3 - 2 * progress)
+            music.volume = clamp(startVolume + volumeDifference * easedProgress, 0, 1)
+            if (progress < 1) {
+                state.activeVolumeFadeFrame = requestAnimationFrame(updateVolume)
+            } else {
+                state.activeVolumeFadeFrame = null
+            }
+        }
+
+        state.activeVolumeFadeFrame = requestAnimationFrame(updateVolume)
+    }
     const scheduleNextLick = (first = false) => {
         state.nextLickAt = performance.now() + randomBetween(first ? 8000 : 18000, first ? 14000 : 30000)
     }
@@ -1038,6 +1058,8 @@ function initWalkingDog() {
         state.easterEggTapCount = 0
         clearTimeout(state.easterEggTapTimer)
         state.easterEggTapTimer = null
+        const volumeBeforeEasterEgg = music.volume
+        fadeMusicVolume(volumeBeforeEasterEgg * 0.38, 700)
 
         const pose = captureCurrentPose()
         state.layoutVersion += 1
@@ -1098,6 +1120,7 @@ function initWalkingDog() {
             scheduleNextLick()
             state.resumeMobileRoute = usesMobileRoute()
             state.easterEggActive = false
+            fadeMusicVolume(volumeBeforeEasterEgg, 950)
         }
     }
 
