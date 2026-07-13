@@ -564,6 +564,39 @@ h1 {
     transform: translate(-50%, 0) scale(1);
 }
 
+.dog-tap-heart {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: clamp(23px, 6vw, 29px);
+    height: clamp(23px, 6vw, 29px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    background: rgba(255, 244, 249, 0.9);
+    box-shadow: 0 4px 12px rgba(190, 37, 112, 0.2);
+    font-size: clamp(0.82rem, 3.5vw, 1rem);
+    line-height: 1;
+    transform: translate(-50%, -50%) scale(0.45);
+    animation: dogTapHeartFloat 900ms ease-out forwards;
+    pointer-events: none;
+    z-index: 4;
+}
+
+@keyframes dogTapHeartFloat {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -35%) scale(0.45) rotate(-8deg);
+    }
+    22% {
+        opacity: 1;
+        transform: translate(-50%, -70%) scale(1) rotate(4deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -210%) scale(1.18) rotate(10deg);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .hearts-bg::before,
     .hearts-bg::after,

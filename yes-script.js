@@ -1114,9 +1114,27 @@ function initWalkingDog() {
         state.pausedTapAnimation = null
     }
 
+    const showDogTapHeart = () => {
+        const dogRect = dog.getBoundingClientRect()
+        const heart = document.createElement('span')
+        const horizontalJitter = randomBetween(-8, 8)
+        heart.className = 'dog-tap-heart'
+        heart.textContent = '💗'
+        heart.style.left = `${clamp(
+            dogRect.left + dogRect.width / 2 + horizontalJitter,
+            14,
+            window.innerWidth - 14
+        )}px`
+        heart.style.top = `${Math.max(18, dogRect.top + 2)}px`
+        heart.addEventListener('animationend', () => heart.remove(), { once: true })
+        track.appendChild(heart)
+    }
+
     const handleDogTap = (event) => {
         event.preventDefault()
         if (state.easterEggActive) return
+
+        showDogTapHeart()
 
         if (state.easterEggTapCount === 0 && state.activeAnimation) {
             state.pausedTapAnimation = state.activeAnimation
