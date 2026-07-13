@@ -1,3 +1,5 @@
+const musicHandoffKey = 'sofia-music-handoff'
+
 if (document.readyState === 'complete') {
     initPage()
 } else {
@@ -1253,13 +1255,38 @@ function initializeMusic(state, music, musicToggle) {
     music.muted = false
     music.volume = 0.3
 
-    music.play().then(() => {
-        state.musicPlaying = true
-        updateMusicToggle(musicToggle, true)
-    }).catch(() => {
-        state.musicPlaying = true
-        updateMusicToggle(musicToggle, true)
-    })
+    let handoff = null
+    try {
+        handoff = JSON.parse(sessionStorage.getItem(musicHandoffKey))
+        sessionStorage.removeItem(musicHandoffKey)
+    } catch {
+        handoff = null
+    }
+
+    const startMusic = () => {
+        if (Number.isFinite(handoff?.currentTime) && music.duration) {
+            music.currentTime = Math.min(handoff.currentTime, Math.max(0, music.duration - 0.1))
+        }
+        if (handoff?.playing === false) {
+            state.musicPlaying = false
+            updateMusicToggle(musicToggle, false)
+            return
+        }
+
+        music.play().then(() => {
+            state.musicPlaying = true
+            updateMusicToggle(musicToggle, true)
+        }).catch(() => {
+            state.musicPlaying = true
+            updateMusicToggle(musicToggle, true)
+        })
+    }
+
+    if (handoff && music.readyState < 1) {
+        music.addEventListener('loadedmetadata', startMusic, { once: true })
+    } else {
+        startMusic()
+    }
 }
 
 function updateMusicToggle(musicToggle, isPlaying) {

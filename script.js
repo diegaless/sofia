@@ -1,4 +1,5 @@
 const gifSetName = document.body.dataset.gifSet || 'gifs'
+const musicHandoffKey = 'sofia-music-handoff'
 const gifAssetVersion = document.body.dataset.gifVersion
 const gifStages = [
     'stage-0-normal.gif',
@@ -144,7 +145,7 @@ function handleYesClick(state, elements) {
         return
     }
 
-    showYesScreen(state)
+    showYesScreen(state, elements)
 }
 
 function showTeaseMessage(state, teaseToast, msg) {
@@ -242,11 +243,19 @@ function runAway(noBtn) {
     noBtn.style.zIndex = '50'
 }
 
-function showYesScreen(state) {
+function showYesScreen(state, elements) {
     if (state.yesScreenVisible) {
         return
     }
 
     state.yesScreenVisible = true
+    try {
+        sessionStorage.setItem(musicHandoffKey, JSON.stringify({
+            currentTime: elements.music.currentTime,
+            playing: state.musicPlaying && !elements.music.paused
+        }))
+    } catch {
+        // Continue navigating if storage is unavailable.
+    }
     window.location.assign('yes.html')
 }
