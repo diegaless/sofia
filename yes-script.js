@@ -456,18 +456,26 @@ function initWalkingDog() {
             const hint = document.createElement('div')
             hint.className = 'dog-hint'
             hint.setAttribute('role', 'status')
-            hint.textContent = 'Psst… acaríciame un poquito 🐾💗'
+            hint.textContent = 'Psst… acaríciame 🐾💗'
             document.body.appendChild(hint)
 
             const halfHintWidth = hint.offsetWidth / 2
             const showBelow = dogRect.top < hint.offsetHeight + 18
+            const dogCenterX = dogRect.left + dogRect.width / 2
+            const hintCenterX = clamp(
+                dogCenterX,
+                halfHintWidth + 4,
+                window.innerWidth - halfHintWidth - 4
+            )
+            const arrowX = clamp(
+                halfHintWidth + dogCenterX - hintCenterX,
+                6,
+                hint.offsetWidth - 6
+            )
             hint.classList.toggle('is-below', showBelow)
-            hint.style.left = `${clamp(
-                dogRect.left + dogRect.width / 2,
-                halfHintWidth + 10,
-                window.innerWidth - halfHintWidth - 10
-            )}px`
+            hint.style.left = `${hintCenterX}px`
             hint.style.top = `${showBelow ? dogRect.bottom + 12 : dogRect.top - 12}px`
+            hint.style.setProperty('--hint-arrow-x', `${arrowX}px`)
             requestAnimationFrame(() => hint.classList.add('is-visible'))
 
             await wait(3600)
