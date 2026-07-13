@@ -1250,7 +1250,9 @@ function initWalkingDog(music) {
 }
 
 function initializeMusic(state, music, musicToggle) {
-    music.autoplay = true
+    // Start explicitly only after restoring the handoff position. Setting
+    // autoplay here can make mobile browsers briefly begin again at 0.
+    music.autoplay = false
     music.defaultMuted = false
     music.muted = false
     music.volume = 0.3
@@ -1258,15 +1260,11 @@ function initializeMusic(state, music, musicToggle) {
     let handoff = null
     try {
         handoff = JSON.parse(sessionStorage.getItem(musicHandoffKey))
-        sessionStorage.removeItem(musicHandoffKey)
     } catch {
         handoff = null
     }
 
     const startMusic = () => {
-        if (Number.isFinite(handoff?.currentTime) && music.duration) {
-            music.currentTime = Math.min(handoff.currentTime, Math.max(0, music.duration - 0.1))
-        }
         if (handoff?.playing === false) {
             state.musicPlaying = false
             updateMusicToggle(musicToggle, false)
@@ -1282,11 +1280,59 @@ function initializeMusic(state, music, musicToggle) {
         })
     }
 
-    if (handoff && music.readyState < 1) {
-        music.addEventListener('loadedmetadata', startMusic, { once: true })
-    } else {
-        startMusic()
+    const clearHandoff = () => {
+        try {
+            sessionStorage.removeItem(musicHandoffKey)
+        } catch {
+            // Storage can be unavailable in private browsing modes.
+        }
     }
+
+    const restorePositionAndStart = () => {
+        const savedTime = Number(handoff?.currentTime)
+        if (!Number.isFinite(savedTime) || savedTime <= 0) {
+            clearHandoff()
+            startMusic()
+            return
+        }
+
+        const finiteDuration = Number.isFinite(music.duration) && music.duration > 0
+        const targetTime = finiteDuration
+            ? Math.min(savedTime, Math.max(0, music.duration - 0.1))
+            : savedTime
+        let seekFinished = false
+        let seekTimeoutId = null
+
+        const finishSeek = () => {
+            if (seekFinished) {
+                return
+            }
+            seekFinished = true
+            clearTimeout(seekTimeoutId)
+            music.removeEventListener('seeked', finishSeek)
+            clearHandoff()
+            startMusic()
+        }
+
+        music.addEventListener('seeked', finishSeek, { once: true })
+        seekTimeoutId = setTimeout(finishSeek, 1800)
+
+        try {
+            music.currentTime = targetTime
+            if (!music.seeking && Math.abs(music.currentTime - targetTime) < 0.25) {
+                queueMicrotask(finishSeek)
+            }
+        } catch {
+            finishSeek()
+        }
+    }
+
+    if (music.readyState >= 1) {
+        restorePositionAndStart()
+        return
+    }
+
+    music.addEventListener('loadedmetadata', restorePositionAndStart, { once: true })
 }
 
 function updateMusicToggle(musicToggle, isPlaying) {
