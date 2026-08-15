@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparar GIFs de perros salchicha</title>
+    <link rel="icon" type="image/png" href="assets/favicon-sofia-diego.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 36px 20px 64px; color: #6e2148; background: linear-gradient(145deg, #fff0f3, #ffd9e2); font-family: Nunito, sans-serif; }
+        header { max-width: 1050px; margin: 0 auto 30px; text-align: center; }
+        h1 { margin: 0 0 10px; color: #d63384; font-size: clamp(2rem, 5vw, 3.4rem); }
+        header p { margin: 0 auto; max-width: 720px; font-size: 1.05rem; }
+        .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); gap: 24px; max-width: 1680px; margin: auto; }
+        .option { padding: 24px; border: 1px solid rgba(214, 51, 132, .15); border-radius: 28px; background: rgba(255,255,255,.8); box-shadow: 0 18px 50px rgba(152, 44, 101, .12); }
+        .option h2 { margin: 0 0 4px; color: #c12673; }
+        .option > p { margin: 0 0 20px; min-height: 48px; }
+        .stages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+        figure { margin: 0; padding: 8px; border-radius: 16px; background: #fff5f7; text-align: center; }
+        figure img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 10px; }
+        figcaption { margin-top: 6px; font-size: .72rem; font-weight: 800; }
+        .open { display: block; margin-top: 20px; padding: 13px 18px; border-radius: 14px; background: linear-gradient(135deg, #e83e8c, #c12673); color: white; font-weight: 900; text-align: center; text-decoration: none; box-shadow: 0 7px 18px rgba(193, 38, 115, .25); }
+        @media (max-width: 520px) { .stages { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Tres opciones salchicheras 🌭🐶</h1>
+        <p>Las dos siguen la misma progresión: normal, confuso, suplicando, triste, más triste, devastado, llorando y huyendo.</p>
+    </header>
+
+    <main class="options">
+        <section class="option">
+            <h2>Opción A · GIFs de internet</h2>
+            <p>Perros salchicha variados y reales, seleccionados de Tenor por la emoción que transmiten.</p>
+            <div class="stages">
+                <figure><img src="assets/gifs-internet/stage-0-normal.gif" alt="Normal"><figcaption>0 · Normal</figcaption></figure>
+                <figure><img src="assets/gifs-internet/stage-1-confused.gif" alt="Confuso"><figcaption>1 · Confuso</figcaption></figure>
+                <figure><img src="assets/gifs-internet/stage-2-pleading.gif" alt="Suplicando"><figcaption>2 · Suplicando</figcaption></figure>
+                <figure><img src="assets/gifs-internet/stage-3-sad.gif" alt="Triste"><figcaption>3 · Triste</figcaption></figure>
+                <figure><img src="assets/gifs-internet/stage-4-sadder.gif" alt="Más triste"><figcaption>4 · Más triste</figcaption></figure>
+                <figure><img src="assets/gifs-internet/stage-5-devastated.gif" alt="Devastado"><figcaption>5 · Devastado</figcaption></figure>
+                <figure><img src="assets/gifs-internet/stage-6-very-devastated.gif" alt="Llorando"><figcaption>6 · Llorando</figcaption></figure>
+                <figure><img src="assets/gifs-internet/stage-7-crying-runaway.gif" alt="Huyendo"><figcaption>7 · Huyendo</figcaption></figure>
+            </div>
+            <a class="open" href="index-internet.html">Probar la opción A</a>
+        </section>
+
+        <section class="option">
+            <h2>Opción B · Generados con ImageGen</h2>
+            <p>Un único cachorro 3D coherente, creado para esta página y animado en bucles suaves.</p>
+            <div class="stages">
+                <figure><img src="assets/gifs-imagegen/stage-0-normal.gif" alt="Normal"><figcaption>0 · Normal</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen/stage-1-confused.gif" alt="Confuso"><figcaption>1 · Confuso</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen/stage-2-pleading.gif" alt="Suplicando"><figcaption>2 · Suplicando</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen/stage-3-sad.gif" alt="Triste"><figcaption>3 · Triste</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen/stage-4-sadder.gif" alt="Más triste"><figcaption>4 · Más triste</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen/stage-5-devastated.gif" alt="Devastado"><figcaption>5 · Devastado</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen/stage-6-very-devastated.gif" alt="Llorando"><figcaption>6 · Llorando</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen/stage-7-crying-runaway.gif" alt="Huyendo"><figcaption>7 · Huyendo</figcaption></figure>
+            </div>
+            <a class="open" href="index-imagegen.html">Probar la opción B</a>
+        </section>
+
+        <section class="option">
+            <h2>Opción C · ImageGen realista</h2>
+            <p>Basada en tus dos fotos: el mismo salchicha chocolate, con aspecto fotográfico y emociones naturales.</p>
+            <div class="stages">
+                <figure><img src="assets/gifs-imagegen-realista/stage-0-normal.gif?v=2" alt="Normal"><figcaption>0 · Normal</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen-realista/stage-1-confused.gif?v=2" alt="Confuso"><figcaption>1 · Confuso</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen-realista/stage-2-pleading.gif?v=2" alt="Suplicando"><figcaption>2 · Suplicando</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen-realista/stage-3-sad.gif?v=2" alt="Triste"><figcaption>3 · Triste</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen-realista/stage-4-sadder.gif?v=2" alt="Más triste"><figcaption>4 · Más triste</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen-realista/stage-5-devastated.gif?v=2" alt="Devastado"><figcaption>5 · Devastado</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen-realista/stage-6-very-devastated.gif?v=2" alt="Llorando"><figcaption>6 · Llorando</figcaption></figure>
+                <figure><img src="assets/gifs-imagegen-realista/stage-7-crying-runaway.gif?v=2" alt="Huyendo"><figcaption>7 · Huyendo</figcaption></figure>
+            </div>
+            <a class="open" href="index-imagegen-realista.html">Probar la opción C</a>
+        </section>
+    </main>
+</body>
+</html>

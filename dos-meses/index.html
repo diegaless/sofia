@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f8d8e4">
+    <title>Nuestro segundo mes 💗</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="../assets/favicon-sofia-diego.png">
+    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="game.css?v=25">
+</head>
+<body>
+    <div class="ambient-hearts" aria-hidden="true">
+        <span>♡</span><span>♡</span><span>♡</span><span>♡</span><span>♡</span>
+    </div>
+    <div id="celebration-layer" class="celebration-layer" aria-hidden="true"></div>
+
+    <main class="chapter-shell">
+        <section id="intro-scene" class="scene intro-scene is-active" aria-labelledby="intro-title">
+            <div class="chapter-mark" aria-label="Capítulo dos">
+                <span>Capítulo</span>
+                <strong>02</strong>
+            </div>
+
+            <div class="dog-portrait">
+                <div class="dog-glow"></div>
+                <span class="dog-ground-shadow" aria-hidden="true"></span>
+                <picture>
+                    <source media="(prefers-reduced-motion: reduce)" srcset="../assets/mia-tumbada-reposo.png?v=1">
+                    <img src="../assets/mia-tumbada-restregandose.webp?v=1" alt="Mía tumbada, moviendo suavemente las patitas y restregándose por el suelo">
+                </picture>
+                <span class="dog-note">Tengo una misión para ti…</span>
+            </div>
+
+            <p class="eyebrow">Solo para Sofía</p>
+            <h1 id="intro-title">Dos meses.<br><em>Dos recuerdos.</em><br>Una sorpresa.</h1>
+            <p class="intro-copy">Mía ha escondido dos pedacitos de nuestra historia. Encuéntralos para descubrir lo que quiere entregarte.</p>
+
+            <button id="start-mission" class="primary-button" type="button">
+                Seguir las huellas
+                <span aria-hidden="true">🐾</span>
+            </button>
+        </section>
+
+        <section id="memories-scene" class="scene memories-scene" aria-labelledby="memories-title" hidden>
+            <header class="scene-header">
+                <div>
+                    <p class="eyebrow">La misión de Mía</p>
+                    <h2 id="memories-title">Encuentra los dos recuerdos</h2>
+                </div>
+                <div class="progress-badge" aria-live="polite">
+                    <span id="progress-count">0</span><span>/2</span>
+                </div>
+            </header>
+
+            <div class="progress-track" aria-hidden="true">
+                <span id="progress-fill"></span>
+            </div>
+
+            <div class="paw-trail" aria-hidden="true">
+                <span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span>
+            </div>
+
+            <div class="memory-grid">
+                <button class="memory-card" type="button" data-memory="0" aria-label="Abrir el primer recuerdo">
+                    <span class="memory-number">01</span>
+                    <span class="envelope" aria-hidden="true">
+                        <span class="envelope-flap"></span>
+                        <span class="envelope-paper">Para ti</span>
+                        <span class="wax-seal">S</span>
+                    </span>
+                    <span class="memory-label">Primer recuerdo</span>
+                    <span class="memory-state">Abrir sobre</span>
+                </button>
+
+                <button class="memory-card" type="button" data-memory="1" aria-label="Abrir el segundo recuerdo">
+                    <span class="memory-number">02</span>
+                    <span class="envelope envelope-rose" aria-hidden="true">
+                        <span class="envelope-flap"></span>
+                        <span class="envelope-paper">Para ti</span>
+                        <span class="wax-seal">D</span>
+                    </span>
+                    <span class="memory-label">Segundo recuerdo</span>
+                    <span class="memory-state">Abrir sobre</span>
+                </button>
+            </div>
+
+            <p id="mission-message" class="mission-message" aria-live="polite">Cada sobre guarda algo que quería decirte.</p>
+
+            <button id="open-letter" class="primary-button letter-button" type="button" hidden>
+                Jugar la misión secreta
+                <span aria-hidden="true">🎮</span>
+            </button>
+        </section>
+
+        <section id="game-scene" class="scene game-scene" aria-labelledby="game-scene-title" hidden>
+            <header class="game-scene-heading">
+                <p class="eyebrow">El viaje secreto de Sofía</p>
+                <h2 id="game-scene-title">La ruta de los recuerdos</h2>
+            </header>
+
+            <div id="sofia-runner" class="runner-game" data-game-state="idle">
+                <div class="runner-frame">
+                    <canvas id="runner-canvas" role="application" tabindex="0" aria-label="Juego La ruta de los recuerdos. Ayuda a Sofía a completar una ruta de seiscientos ochenta metros. Usa las flechas o desliza para moverte, saltar y rodar."></canvas>
+
+                    <div class="runner-hud" aria-label="Marcador de la partida">
+                        <div class="runner-metric"><span>Puntos</span><strong id="runner-score">0</strong></div>
+                        <div class="runner-metric"><span>Distancia</span><strong id="runner-distance">0 m</strong></div>
+                        <div class="runner-metric"><span>Corazones</span><strong id="runner-coins">0</strong></div>
+                        <div class="runner-metric"><span>Récord</span><strong id="runner-best">0</strong></div>
+                        <div class="runner-lives" aria-label="Tres oportunidades"><span id="runner-lives">♥ ♥ ♥</span></div>
+                    </div>
+
+                    <div id="runner-location" class="runner-location" aria-live="polite" aria-label="Pasaje de Lodares y Altozano, progreso de la ruta cero por ciento">Pasaje de Lodares + Altozano · Albacete</div>
+
+                    <div id="runner-countdown" class="runner-countdown" role="status" aria-live="assertive" hidden>
+                        <strong id="runner-countdown-value">3</strong>
+                        <span id="runner-countdown-label">Prepárate</span>
+                    </div>
+
+                    <div id="runner-combo" class="runner-combo" aria-hidden="true" hidden>
+                        <span id="runner-combo-label">Racha</span>
+                        <strong id="runner-combo-value">2</strong>
+                        <em id="runner-combo-multiplier">×1</em>
+                    </div>
+
+                    <div id="runner-power-status" class="runner-power-status" aria-hidden="true" hidden>
+                        <span id="runner-power-icon" aria-hidden="true">✦</span>
+                        <strong id="runner-power-label">Escudo</strong>
+                        <em id="runner-power-time">8 s</em>
+                    </div>
+
+                    <div id="runner-level-toast" class="runner-level-toast" role="status" aria-live="polite" hidden>
+                        <span id="runner-level-toast-number">Nivel 1 de 2</span>
+                        <strong id="runner-level-toast-title">Albacete</strong>
+                        <small id="runner-level-toast-mission">Encuentra el ritmo entre arcos y flores</small>
+                    </div>
+
+                    <div id="runner-memory-toast" class="runner-memory-toast" role="status" aria-live="polite" hidden>
+                        <img id="runner-memory-toast-image" alt="">
+                        <div>
+                            <small id="runner-memory-toast-number">Recuerdo 1 de 2</small>
+                            <strong id="runner-memory-toast-title">Albacete</strong>
+                            <em id="runner-memory-toast-caption">Nuestro comienzo</em>
+                        </div>
+                    </div>
+
+                    <div id="runner-crate-toast" class="runner-crate-toast" role="status" aria-live="polite" hidden>
+                        <span id="runner-crate-toast-icon" aria-hidden="true">▣</span>
+                        <div>
+                            <small id="runner-crate-toast-title">Caja de recuerdos</small>
+                            <strong id="runner-crate-toast-reward">Premio sorpresa</strong>
+                            <em id="runner-crate-toast-caption">La ruta tiene premio</em>
+                        </div>
+                    </div>
+
+                    <div id="runner-video-toast" class="runner-video-toast" role="status" aria-live="polite" hidden>
+                        <span aria-hidden="true">▶</span>
+                        <div>
+                            <small>Palabra completada</small>
+                            <strong>Recuerdo de los dos meses desbloqueado</strong>
+                            <em>Termina la ruta para volver a verlo</em>
+                        </div>
+                    </div>
+
+                    <div id="runner-mission-status" class="runner-mission-status" role="status" aria-live="polite" hidden>
+                        <span>Objetivo</span>
+                        <strong id="runner-mission-label">Recoge corazones</strong>
+                        <em><b id="runner-mission-value">0</b>/<span id="runner-mission-target">10</span></em>
+                        <div id="runner-word-hunt" class="runner-word-hunt" aria-label="Palabra SOFÍA, 0 de 5 letras">
+                            <span>Palabra</span>
+                            <div aria-hidden="true">
+                                <b data-runner-letter-slot="0">S</b>
+                                <b data-runner-letter-slot="1">O</b>
+                                <b data-runner-letter-slot="2">F</b>
+                                <b data-runner-letter-slot="3">Í</b>
+                                <b data-runner-letter-slot="4">A</b>
+                            </div>
+                            <small class="runner-crate-progress" aria-label="0 de 2 cajas abiertas"><span aria-hidden="true">▣</span><b id="runner-crate-count">0/2</b></small>
+                        </div>
+                    </div>
+
+                    <div id="runner-impact-flash" class="runner-impact-flash" aria-hidden="true"></div>
+
+                    <div id="runner-action-cue" class="runner-action-cue" role="status" aria-live="polite" hidden>
+                        <span id="runner-action-cue-icon" aria-hidden="true">↑</span>
+                        <strong id="runner-action-cue-text">SALTA</strong>
+                    </div>
+
+                    <div class="runner-actions">
+                        <button id="runner-pause" class="runner-icon-button" type="button" aria-label="Pausar partida" title="Pausar partida">Ⅱ</button>
+                        <button id="runner-mute" class="runner-icon-button" type="button" aria-label="Silenciar audio del juego" aria-pressed="false" title="Silenciar audio del juego">♪</button>
+                    </div>
+
+                    <p id="runner-feedback" class="runner-feedback" aria-hidden="true"></p>
+
+                    <div id="runner-start-screen" class="runner-overlay runner-start-screen">
+                        <div class="runner-overlay-card">
+                            <p class="runner-kicker">Un viaje hecho para ella</p>
+                            <h3>La ruta de los recuerdos</h3>
+                            <p>Sofía, tú eres la protagonista de esta aventura. Supera los dos niveles y reúne todas las letras de tu nombre; cuando completes SOFÍA, se desbloqueará una sorpresa muy especial para recordar nuestros dos meses.</p>
+                            <div class="runner-places" aria-label="Escenarios de la partida">
+                                <span><b aria-hidden="true">01</b>Albacete</span>
+                                <span><b aria-hidden="true">02</b>Aguamarina</span>
+                            </div>
+                            <button id="runner-play" class="runner-main-button" type="button">Comenzar la ruta <span aria-hidden="true">♥</span></button>
+                            <p class="runner-saved-best">Récord de la ruta: <strong id="runner-start-best">0</strong></p>
+                            <button class="runner-history-button" type="button" data-runner-history-open><span aria-hidden="true">♛</span> Ver mejores puntuaciones</button>
+                        </div>
+                    </div>
+
+                    <div id="runner-tutorial" class="runner-overlay" hidden>
+                        <div class="runner-overlay-card runner-tutorial-card">
+                            <p class="runner-kicker">Tutorial rápido</p>
+                            <h3>Guía a Sofía</h3>
+                            <div class="runner-tutorial-grid">
+                                <div data-cue-kind="avoid"><span aria-hidden="true">↔ ⚠</span><strong>Cambia de carril</strong><small>Carros y camillas: la línea animada indica hacia dónde cruzan</small></div>
+                                <div data-cue-kind="jump"><span aria-hidden="true">↑ ⚠</span><strong>Salta</strong><small>Charco con señal amarilla</small></div>
+                                <div data-cue-kind="slide"><span aria-hidden="true">↓ ⚠</span><strong>Desliza y agáchate</strong><small>Pasa realmente bajo toldos, sombrillas y cortinas</small></div>
+                                <div data-cue-kind="reward"><span aria-hidden="true">✓ ♡</span><strong>Recoge e impulsa</strong><small>Letras SOFÍA, fotos, cajas sorpresa, Mía salchicha, vuelo guiado y rampas</small></div>
+                            </div>
+                            <p><strong>Objetivo:</strong> cada nivel tiene un reto distinto. Los peligros llevan ⚠; los premios, ✓. Durante el <em>Vuelo de recuerdos</em> muévete a los lados; con <em>Super salto</em>, desliza hacia arriba otra vez en el aire.</p>
+                            <button id="runner-tutorial-start" class="runner-main-button" type="button">¡Lista para la ruta!</button>
+                        </div>
+                    </div>
+
+                    <div id="runner-pause-screen" class="runner-overlay" hidden>
+                        <div class="runner-overlay-card runner-small-card">
+                            <p class="runner-kicker">Un respiro</p>
+                            <h3>Partida pausada</h3>
+                            <p>Sofía recupera el aliento.</p>
+                            <button id="runner-resume" class="runner-main-button" type="button">Continuar</button>
+                        </div>
+                    </div>
+
+                    <div id="runner-end-screen" class="runner-overlay" hidden>
+                        <div class="runner-overlay-card runner-end-card">
+                            <p id="runner-end-kicker" class="runner-kicker">Ruta completada</p>
+                            <h3 id="runner-end-title">¡Qué viaje, Sofía!</h3>
+                            <p id="runner-end-summary" class="runner-end-summary">Has recorrido los dos lugares y llegado hasta la meta.</p>
+                            <div class="runner-final-stats">
+                                <div><span>Puntuación</span><strong id="runner-final-score">0</strong></div>
+                                <div><span>Distancia</span><strong id="runner-final-distance">0 m</strong></div>
+                                <div><span>Corazones</span><strong id="runner-final-coins">0</strong></div>
+                                <div><span>Mejor racha</span><strong id="runner-final-combo">0</strong></div>
+                            </div>
+                            <div class="runner-final-album" aria-label="Álbum de recuerdos recogidos durante la ruta">
+                                <span>Álbum de la ruta <small id="runner-final-crates">▣ 0/2 cajas</small></span>
+                                <div class="runner-final-album-slots">
+                                    <i data-runner-memory-slot="0" role="img" aria-label="Recuerdo 1, todavía no recogido"></i>
+                                    <i data-runner-memory-slot="1" role="img" aria-label="Recuerdo 2, todavía no recogido"></i>
+                                </div>
+                                <strong id="runner-final-memories">0/2</strong>
+                            </div>
+                            <div id="runner-final-word" class="runner-final-word" aria-label="Palabra SOFÍA, 0 de 5 letras">
+                                <span>Palabra secreta</span>
+                                <div aria-hidden="true">
+                                    <b data-runner-final-letter-slot="0">S</b>
+                                    <b data-runner-final-letter-slot="1">O</b>
+                                    <b data-runner-final-letter-slot="2">F</b>
+                                    <b data-runner-final-letter-slot="3">Í</b>
+                                    <b data-runner-final-letter-slot="4">A</b>
+                                </div>
+                                <strong id="runner-final-letters">0/5</strong>
+                            </div>
+                            <div id="runner-video-unlock" class="runner-video-unlock" hidden>
+                                <span class="runner-video-unlock-icon" aria-hidden="true">▶</span>
+                                <div>
+                                    <small>Recuerdo desbloqueado</small>
+                                    <strong>El regalo que me hiciste</strong>
+                                    <em>Has reunido todas las letras de SOFÍA</em>
+                                </div>
+                                <button id="runner-video-open" type="button">Ver vídeo</button>
+                            </div>
+                            <div class="runner-final-rank">
+                                <span aria-hidden="true">♥</span>
+                                <div><small>Rango del recorrido</small><strong id="runner-final-rank">Guardiana de los recuerdos</strong></div>
+                            </div>
+                            <p id="runner-record-message" class="runner-record-message">Tu mejor marca: 0</p>
+                            <button class="runner-history-button" type="button" data-runner-history-open><span aria-hidden="true">♛</span> Ver mejores puntuaciones</button>
+                            <div class="runner-end-actions">
+                                <button id="runner-restart" class="runner-secondary-button" type="button">Repetir la ruta</button>
+                                <button id="runner-continue" class="runner-main-button" type="button">Abrir la carta 💌</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="runner-touch-controls" aria-label="Controles táctiles">
+                        <button type="button" data-runner-action="left" aria-label="Mover a la izquierda">←</button>
+                        <button type="button" data-runner-action="jump" aria-label="Saltar">↑</button>
+                        <button type="button" data-runner-action="slide" aria-label="Rodar o agacharse">↓</button>
+                        <button type="button" data-runner-action="right" aria-label="Mover a la derecha">→</button>
+                    </div>
+                </div>
+
+                <p class="runner-controls-copy">
+                    <span class="runner-controls-desktop"><strong>Teclado:</strong> flechas o WASD · </span>
+                    <span class="runner-controls-mobile"><strong>Gestos:</strong> lados para cambiar · arriba para saltar · abajo para deslizar</span>
+                </p>
+                <p class="runner-asset-credit">Referencia del Pasaje de Lodares: <a href="https://commons.wikimedia.org/wiki/File:Pasaje_de_Lodares,_Albacete,_Espa%C3%B1a,_2022-07-12,_DD_02-04_HDR.jpg" target="_blank" rel="noopener noreferrer">Diego Delso</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a></p>
+                <p id="runner-announcer" class="visually-hidden" aria-live="polite"></p>
+
+                <dialog id="runner-score-history" class="runner-history-dialog" aria-labelledby="runner-history-title">
+                    <div class="runner-history-shell">
+                        <button id="runner-history-close" class="runner-history-close" type="button" aria-label="Cerrar mejores puntuaciones">×</button>
+                        <p class="runner-kicker">Tu recorrido</p>
+                        <h3 id="runner-history-title">Mejores puntuaciones</h3>
+                        <ol id="runner-history-list" class="runner-history-list"></ol>
+                        <p class="runner-history-note">Las 10 mejores partidas se guardan en este dispositivo.</p>
+                    </div>
+                </dialog>
+            </div>
+        </section>
+
+        <section id="letter-scene" class="scene letter-scene" aria-labelledby="letter-title" hidden>
+            <p class="eyebrow">Una última cosa</p>
+            <div class="final-letter">
+                <span class="paper-heart" aria-hidden="true">♥</span>
+                <p class="letter-date">Nuestro segundo mes</p>
+                <h2 id="letter-title">Feliz segundo mes,<br><em>ratita</em> 💗</h2>
+                <div class="letter-copy">
+                    <p>Gracias por cada plan, cada risa y cada momento que hace que dos meses sepan a muy poco.</p>
+                    <p>No sé todo lo que viene, pero sí con quién quiero descubrirlo.</p>
+                    <p>Te elegiría este mes y todos los que vengan.</p>
+                </div>
+                <p class="signature">Diego</p>
+                <span class="signature-kiss">para mi Sofía</span>
+            </div>
+
+            <p class="closing-line">Esto no es el final. Es solo el capítulo 2.</p>
+        </section>
+    </main>
+
+    <dialog id="memory-dialog" class="memory-dialog" aria-labelledby="memory-dialog-title">
+        <button id="close-memory" class="dialog-close" type="button" aria-label="Cerrar recuerdo">×</button>
+        <div class="memory-photo-wrap">
+            <img id="memory-dialog-image" src="" alt="">
+            <span id="memory-dialog-number" class="photo-number"></span>
+        </div>
+        <div class="memory-dialog-copy">
+            <p id="memory-dialog-kicker" class="eyebrow"></p>
+            <h2 id="memory-dialog-title"></h2>
+            <p id="memory-dialog-text"></p>
+        </div>
+    </dialog>
+
+    <dialog id="secret-video-dialog" class="secret-video-dialog" aria-labelledby="secret-video-title" aria-describedby="secret-video-copy">
+        <div class="secret-video-shell">
+            <button id="close-secret-video" class="secret-video-close" type="button" aria-label="Cerrar vídeo de nuestros dos meses">×</button>
+            <p class="secret-video-kicker">Un recuerdo hecho por ti</p>
+            <h2 id="secret-video-title">El regalo que me hiciste 💗</h2>
+            <p id="secret-video-copy">El vídeo que me regalaste por nuestros dos meses, guardado aquí como uno de nuestros recuerdos más especiales.</p>
+            <div class="secret-video-frame">
+                <iframe
+                    id="secret-video-frame"
+                    title="Vídeo que Sofía me regaló por nuestros dos meses"
+                    data-src="https://drive.google.com/file/d/1ZCKgttth2b7k2SOyT0s7Yoi3-VshmhNs/preview"
+                    loading="lazy"
+                    allow="autoplay; fullscreen"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen
+                ></iframe>
+                <div id="secret-video-status" class="secret-video-status" role="status" aria-live="polite">
+                    <span aria-hidden="true"></span>
+                    <strong>Cargando nuestro recuerdo…</strong>
+                </div>
+            </div>
+            <a class="secret-video-link" href="https://drive.google.com/file/d/1ZCKgttth2b7k2SOyT0s7Yoi3-VshmhNs/view?usp=sharing" target="_blank" rel="noopener noreferrer">Abrir el vídeo en Drive</a>
+        </div>
+    </dialog>
+
+    <audio id="bg-music" loop preload="auto">
+        <source src="../music/music-sofia.mp3?v=1" type="audio/mpeg">
+    </audio>
+    <button id="music-toggle" class="music-toggle" type="button" aria-label="Activar música" aria-pressed="false" title="Activar música">🔇</button>
+
+    <script src="runner-game.js?v=50"></script>
+    <script src="script.js?v=11"></script>
+</body>
+</html>

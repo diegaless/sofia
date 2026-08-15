@@ -1,0 +1,50 @@
+# Opciones de GIFs de perros salchicha
+
+## Opción A: selección de internet
+
+Los GIFs se guardan localmente en `assets/gifs-internet/`. Páginas originales:
+
+| Etapa | Emoción | Fuente |
+|---|---|---|
+| 0 | Normal / atento | [Tenor](https://tenor.com/view/yes-yess-dachshund-nods-cute-gif-17881993) |
+| 1 | Confuso | [Tenor](https://tenor.com/view/confused-dog-weinerdog-gif-13842990) |
+| 2 | Suplicando | [Tenor](https://tenor.com/view/sad-eyes-begging-puppy-dog-eyes-talking-talk-funny-animals-gif-6333485909996521744) |
+| 3 | Triste | [Tenor](https://tenor.com/view/sad-face-dog-cute-dachshund-puppy-gif-16689877) |
+| 4 | Más triste | [Tenor](https://tenor.com/view/teckel-dashchund-daschund-puppy-sad-gif-18005552) |
+| 5 | Devastado | [Tenor](https://tenor.com/view/i-heard-my-name-no-im-not-alright-sad-daushund-dog-sad-dog-sad-dog-meme-gif-10280031103261147001) |
+| 6 | Llorando | [Tenor](https://tenor.com/view/animal-brown-comedy-crying-dachshund-gif-4929165609215547481) |
+| 7 | Huyendo | [Tenor](https://tenor.com/view/beanie-dachshund-dachshund-running-dog-flying-dog-sausage-dog-gif-25861711) |
+
+## Opción B: ImageGen
+
+Las ocho escenas se generaron con la herramienta integrada de ImageGen. El prompt base pidió un cachorro salchicha negro y fuego, estilo de película 3D, fondo rosa y composición cuadrada. Cada prompt posterior mantuvo el mismo personaje y cambió únicamente la emoción o la pose: confuso, suplicando, triste, una lágrima, devastado, sollozando y huyendo mientras llora.
+
+Los PNG originales están en `assets/imagegen-sources/`. Los GIFs derivados están en `assets/gifs-imagegen/` y se pueden reconstruir con:
+
+```bash
+python3 scripts/build-imagegen-gifs.py
+```
+
+## Opción C: ImageGen realista basado en las fotos
+
+Las fotos `20260622_113357.jpg` y `20260622_113403.jpg` se usaron como referencias de identidad del mismo perro. El prompt base pidió fotografía natural de estudio del salchicha adulto de pelaje corto chocolate oscuro, ojos avellana, hocico largo, orejas caídas y cuerpo redondeado, sobre fondo rosa claro. Las siete variantes conservaron el mismo perro y cambiaron únicamente pose y emoción: confuso, suplicando, triste, una lágrima, devastado, sollozando tumbado y huyendo mientras llora.
+
+Los PNG originales están en `assets/imagegen-realista-sources/` y los GIFs derivados en `assets/gifs-imagegen-realista/`.
+
+## Estados cenitales del perro de la página final
+
+Los estados `walking-dachshund-idle-wag.webp` y `walking-dachshund-licking.webp` se generaron con la herramienta integrada de ImageGen usando como referencias la fotografía original del perro y el fotograma cenital existente. Los prompts conservaron identidad, escala y cámara vertical a 90 grados; pidieron las cuatro patas quietas, dos posiciones opuestas de la cola y, para el lamido, la cabeza baja con la lengua extendida. Las imágenes se generaron sobre fondo cromático verde uniforme, se recortaron localmente y se convirtieron en WebP animado con transparencia.
+
+Los fotogramas y las fuentes cromáticas están en `assets/dog-states/`.
+
+## Mía tumbada en el capítulo 2
+
+La fotografía `assets/imagegen-sources/mia-tumbada-reference.jpg` se usó como referencia de identidad para crear una secuencia fotográfica de ocho poses. El movimiento mantiene al perro apoyado de lado y recorre un gesto pequeño de patas, hombros y barriga hasta quedar brevemente boca arriba y volver al reposo. La generación se hizo sobre verde cromático uniforme; el fondo se eliminó con matte suave y despill para conservar los bordes del pelo.
+
+La fuente final está en `assets/imagegen-sources/mia-tumbada-spritesheet-v2-alpha.png`. El bucle añade pausas y repite dos poses de patas antes del giro completo para evitar un movimiento mecánico. Se puede reconstruir con:
+
+```bash
+python3 scripts/build-chapter-two-dog.py
+```
+
+El resultado animado es `assets/mia-tumbada-restregandose.webp`; `assets/mia-tumbada-reposo.png` se usa cuando el dispositivo solicita reducir el movimiento.
